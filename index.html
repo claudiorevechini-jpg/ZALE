@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZALE.com.ar — Tu marketplace argentino</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e8ecf2;--white:#fff;--surface2:#dde3ec;--border:#d0d8e4;--border2:#bfc9d8;
+  --blue:#0057ff;--blue-d:#003dbf;--blue-l:#dde8ff;--blue-m:#1a6bff;
+  --navy:#061830;--navy2:#092040;
+  --orange:#ff6200;--orange-l:#fff0e5;
+  --green:#00a05a;--green-l:#e0f5ec;
+  --red:#e0001e;--gold:#f0a000;
+  --text:#0a1828;--text2:#3d5068;--text3:#7a8fa8;--text4:#aabccc;
+  --sh1:0 2px 8px rgba(0,40,100,.10);--sh2:0 4px 20px rgba(0,40,100,.13);
+  --sh3:0 10px 40px rgba(0,40,100,.18);--sh4:0 20px 70px rgba(0,40,100,.22);
+  --r:10px;--rl:16px;--rxl:22px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;overflow-x:hidden}
+.topbar{background:var(--navy);padding:0 20px;height:60px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,.35)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:#fff;cursor:pointer;flex-shrink:0;line-height:1}
+.logo-z{background:linear-gradient(90deg,#4da6ff,#00e0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:1px;display:block;text-align:right}
+.srch{flex:1;max-width:540px;display:flex;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.14);transition:border-color .2s}
+.srch:focus-within{border-color:var(--blue)}
+.srch-cat{background:rgba(255,255,255,.08);border:none;border-right:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+.srch-cat option{background:var(--navy);color:#fff}
+.srch input{flex:1;background:none;border:none;outline:none;color:#fff;padding:0 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif}
+.srch input::placeholder{color:rgba(255,255,255,.35)}
+.srch button{background:var(--blue);border:none;padding:0 18px;color:#fff;font-size:14px;cursor:pointer;font-weight:700}
+.srch button:hover{background:var(--blue-m)}
+.nav-acts{display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0}
+.nb{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);border-radius:8px;padding:7px 11px;color:rgba(255,255,255,.8);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.nb:hover{background:rgba(255,255,255,.14);color:#fff}
+.nb.sell{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:800}
+.cart-nb{background:var(--blue);border:none;border-radius:8px;padding:7px 13px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;gap:7px;transition:background .2s}
+.cart-nb:hover{background:var(--blue-m)}
+.cbdg{background:var(--orange);color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.subnav{background:var(--white);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.subnav::-webkit-scrollbar{display:none}
+.sni{padding:12px 14px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s;flex-shrink:0}
+.sni:hover{color:var(--blue)}
+.sni.active{color:var(--blue);border-bottom-color:var(--blue)}
+.page{display:none}.page.active{display:block}
+.hero{background:linear-gradient(135deg,var(--navy),var(--navy2),#0a2f5a);padding:36px 20px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:44px 44px}
+.hero-content{position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(0,87,255,.28);border:1px solid rgba(77,166,255,.35);border-radius:999px;padding:4px 12px;font-size:10px;font-weight:800;color:#7ec8ff;margin-bottom:14px;text-transform:uppercase;letter-spacing:.8px}
+.hero-badge span{width:5px;height:5px;background:#4da6ff;border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#fff;margin-bottom:10px;letter-spacing:1px}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,#4da6ff,#00e0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:rgba(255,255,255,.6);font-size:14px;line-height:1.6;margin-bottom:20px;max-width:500px}
+.hero-btns{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:24px}
+.btn-p{background:var(--blue);border:none;border-radius:9px;padding:11px 24px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 4px 18px rgba(0,87,255,.45);transition:all .2s}
+.btn-p:hover{background:var(--blue-m);transform:translateY(-2px)}
+.btn-s{background:rgba(255,255,255,.09);border:1.5px solid rgba(255,255,255,.22);border-radius:9px;padding:11px 20px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.btn-s:hover{background:rgba(255,255,255,.16)}
+.hero-kpis{display:flex;gap:20px}
+.kpi .n{font-family:'Bebas Neue',sans-serif;font-size:26px;background:linear-gradient(90deg,#fff,#7ec8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi .l{font-size:11px;color:rgba(255,255,255,.45);font-weight:600}
+.trust{background:var(--white);border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr)}
+.ti{display:flex;align-items:center;gap:10px;padding:12px 16px;border-right:1px solid var(--border);transition:background .2s;cursor:pointer}
+.ti:hover{background:var(--blue-l)}.ti:last-child{border-right:none}
+.tic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.tic.b{background:var(--blue-l)}.tic.g{background:var(--green-l)}.tic.o{background:var(--orange-l)}.tic.gd{background:#fdf2da}
+.tit h4{font-size:12px;font-weight:800;margin-bottom:1px}.tit p{font-size:11px;color:var(--text3)}
+.sec{padding:0 20px 24px}
+.sech{display:flex;align-items:center;justify-content:space-between;padding:20px 0 14px}
+.sect{font-size:19px;font-weight:900}.sect span{color:var(--blue)}
+.seea{background:none;border:1.5px solid var(--border2);border-radius:999px;padding:6px 16px;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.seea:hover{border-color:var(--blue);color:var(--blue)}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:9px}
+.cc{background:var(--white);border:2px solid var(--border);border-radius:var(--rl);padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--sh1)}
+.cc:hover{border-color:var(--blue);background:var(--blue-l);transform:translateY(-2px)}
+.cc img{width:44px;height:44px;object-fit:cover;border-radius:50%;margin:0 auto 7px;display:block}
+.cc-name{font-size:11px;font-weight:800;color:var(--text2)}
+.cc:hover .cc-name{color:var(--blue)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.pcard{background:var(--white);border:1.5px solid var(--border);border-radius:var(--rxl);overflow:hidden;cursor:pointer;transition:all .25s;box-shadow:var(--sh1)}
+.pcard:hover{border-color:var(--blue);transform:translateY(-4px);box-shadow:var(--sh3)}
+.piw{position:relative;overflow:hidden;height:190px;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.pimg{width:100%;height:100%;object-fit:contain;padding:8px;transition:transform .4s;display:block}
+.pcard:hover .pimg{transform:scale(1.05)}
+.pbdgs{position:absolute;top:9px;left:9px;display:flex;flex-direction:column;gap:4px;z-index:2}
+.pbdg{font-size:9px;font-weight:900;padding:3px 7px;border-radius:5px;text-transform:uppercase}
+.pbdg.hot{background:var(--red);color:#fff}.pbdg.sale{background:var(--orange);color:#fff}.pbdg.new{background:var(--green);color:#fff}
+.pwsh{position:absolute;top:9px;right:9px;z-index:2;width:30px;height:30px;background:rgba(255,255,255,.92);border:1.5px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;box-shadow:var(--sh1);transition:all .2s}
+.pwsh:hover{background:#fff0f3;border-color:#ffaaaa}.pwsh.on{background:#fff0f3;border-color:var(--red)}
+.pcb{padding:11px 13px}
+.pc-sel{font-size:10px;color:var(--text3);margin-bottom:3px;display:flex;align-items:center;gap:3px}
+.vck{color:var(--blue);font-weight:800}
+.pc-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.35;min-height:2.7em;overflow:hidden}
+.pc-stars{display:flex;align-items:center;gap:4px;margin-bottom:7px}
+.pc-s{color:var(--gold);font-size:12px}
+.pc-r{font-size:11px;font-weight:800;color:var(--text2)}
+.pc-c{font-size:10px;color:var(--text4)}
+.pc-price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+.pnow{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--text);letter-spacing:.5px}
+.pwas{font-size:11px;color:var(--text4);text-decoration:line-through}
+.poff{font-size:10px;font-weight:900;color:var(--green);background:var(--green-l);padding:2px 6px;border-radius:999px}
+.pship{font-size:10px;color:var(--green);font-weight:800;margin-bottom:2px}
+.pinst{font-size:10px;color:var(--text3);margin-bottom:7px}
+.pinst strong{color:var(--blue)}
+.addbt{width:100%;background:var(--blue);border:none;border-radius:8px;padding:9px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.addbt:hover{background:var(--blue-m)}
+.mOv{display:none;position:fixed;inset:0;background:rgba(6,24,48,.75);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(7px)}
+.mOv.on{display:flex}
+.modal{background:var(--white);border-radius:var(--rxl);width:820px;max-width:95vw;max-height:91vh;overflow-y:auto;box-shadow:var(--sh4)}
+.mhd{position:sticky;top:0;background:var(--white);border-bottom:1px solid var(--border);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;z-index:1}
+.mhd h2{font-size:14px;font-weight:900}
+.mhd button{width:30px;height:30px;background:var(--bg);border:1.5px solid var(--border);border-radius:50%;color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.mbd{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:20px}
+.mimg{border-radius:var(--rl);overflow:hidden;aspect-ratio:1;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.mimg img{width:100%;height:100%;object-fit:contain;padding:16px}
+.m-sel{font-size:11px;color:var(--text3);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.m-vck{color:var(--blue);font-weight:900}
+.m-name{font-size:18px;font-weight:900;margin-bottom:7px}
+.m-price{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--navy);letter-spacing:1px;margin:9px 0 2px}
+.m-was{font-size:12px;color:var(--text4);text-decoration:line-through;margin-bottom:3px}
+.m-green{font-size:12px;color:var(--green);font-weight:800;margin-bottom:3px}
+.m-stock{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--green);margin-bottom:14px}
+.m-stock span:first-child{width:8px;height:8px;background:var(--green);border-radius:50%;display:block}
+.qty-row{display:flex;align-items:center;border:2px solid var(--border2);border-radius:9px;overflow:hidden;width:fit-content;margin-bottom:13px}
+.qb{background:var(--bg);border:none;width:36px;height:36px;font-size:18px;cursor:pointer;color:var(--text);font-weight:800}
+.qb:hover{background:var(--border)}
+.qn{width:44px;text-align:center;border:none;background:none;font-size:15px;font-weight:900;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif}
+.m-acts{display:flex;gap:8px;margin-bottom:14px}
+.mbuy{flex:1;background:var(--blue);border:none;border-radius:9px;padding:12px;color:#fff;font-size:13px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 4px 14px rgba(0,87,255,.3);transition:all .2s}
+.mbuy:hover{background:var(--blue-m)}
+.madd{flex:1;background:none;border:2px solid var(--blue);border-radius:9px;padding:12px;color:var(--blue);font-size:13px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.madd:hover{background:var(--blue-l)}
+.m-feats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.mf{display:flex;align-items:center;gap:7px;background:var(--bg);border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;color:var(--text2)}
+.ctw{margin-top:12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.ct-head{background:var(--navy);color:#fff;padding:9px 13px;font-size:12px;font-weight:800}
+.ct-header{display:grid;grid-template-columns:1.2fr 1fr 1fr 1.3fr;background:var(--bg)}
+.ct-header .ch{padding:7px 10px;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.3px}
+.ct-row2{display:grid;grid-template-columns:1.2fr 1fr 1fr 1.3fr;border-top:1px solid var(--border)}
+.ct-row2.si{background:#f0fff6}
+.ct-cell{padding:8px 10px;font-size:12px;display:flex;align-items:center}
+.ct-cell.big{font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--blue)}
+.tag-si{background:var(--green-l);color:var(--green);font-size:9px;font-weight:900;padding:2px 7px;border-radius:999px}
+.tag-ci{background:var(--orange-l);color:var(--orange);font-size:9px;font-weight:900;padding:2px 7px;border-radius:999px}
+.ct-legal{font-size:10px;color:var(--text3);padding:7px 12px;background:var(--bg);border-top:1px solid var(--border);line-height:1.5}
+.cOv{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:298}
+.cOv.on{display:block}
+.cart{position:fixed;right:-420px;top:0;bottom:0;width:420px;background:var(--white);border-left:1px solid var(--border);z-index:299;transition:right .32s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-6px 0 40px rgba(0,40,100,.14)}
+.cart.on{right:0}
+.chd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--navy)}
+.chd h2{font-size:16px;font-weight:900;color:#fff;display:flex;align-items:center;gap:8px}
+.cclose{width:30px;height:30px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:50%;color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cbody{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
+.cempty{text-align:center;padding:36px 14px;color:var(--text3)}
+.cempty .cic{font-size:44px;margin-bottom:9px}
+.cempty p{font-size:13px;font-weight:800}
+.citem{background:var(--bg);border-radius:var(--r);padding:9px;display:flex;gap:9px;align-items:center;border:1px solid var(--border)}
+.citem img{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:7px;flex-shrink:0;padding:3px}
+.ci-info{flex:1}
+.ci-name{font-size:12px;font-weight:800;margin-bottom:3px}
+.ci-price{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--blue)}
+.ci-q{font-size:11px;color:var(--text3)}
+.ci-rm{background:none;border:none;color:var(--text4);cursor:pointer;font-size:17px;padding:3px;transition:color .2s}
+.ci-rm:hover{color:var(--red)}
+.cft{padding:13px 15px;border-top:1px solid var(--border)}
+.ctrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:13px}
+.ctrow.main{font-size:18px;font-weight:900;margin-top:9px}
+.ctrow .lbl{color:var(--text2)}
+.csave{font-size:11px;font-weight:800;color:var(--green);margin-bottom:4px;background:var(--green-l);padding:6px 10px;border-radius:7px}
+.ccuota{font-size:11px;font-weight:700;color:var(--blue);margin-bottom:11px;background:var(--blue-l);padding:6px 10px;border-radius:7px}
+.ckbt{width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-m));border:none;border-radius:10px;padding:13px;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 4px 16px rgba(0,87,255,.3);transition:all .2s}
+.ckbt:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(0,87,255,.45)}
+.filters-row{display:flex;gap:6px;align-items:center;padding:0 20px 12px;overflow-x:auto;scrollbar-width:none}
+.filters-row::-webkit-scrollbar{display:none}
+.fchip{background:var(--white);border:1.5px solid var(--border2);border-radius:999px;padding:6px 13px;font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:var(--sh1);flex-shrink:0}
+.fchip:hover{border-color:var(--blue);color:var(--blue)}
+.fchip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;margin-top:40px}
+.fg{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:28px;margin-bottom:30px}
+.fb-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fff;letter-spacing:3px;margin-bottom:9px}
+.fb-logo span{background:linear-gradient(90deg,#4da6ff,#00e0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.fb-desc{font-size:11px;color:rgba(255,255,255,.4);line-height:1.7;margin-bottom:14px}
+.fb-soc{display:flex;gap:7px}
+.fsoc{width:32px;height:32px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:all .2s}
+.fsoc:hover{background:var(--blue)}
+.fc h4{font-size:10px;font-weight:900;color:#fff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.fl{display:block;font-size:11px;color:rgba(255,255,255,.4);margin-bottom:8px;cursor:pointer;transition:color .2s}
+.fl:hover{color:#4da6ff}
+.fbot{border-top:1px solid rgba(255,255,255,.09);padding-top:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px}
+.fbot p{font-size:11px;color:rgba(255,255,255,.3)}
+.fpay{display:flex;gap:5px}
+.fpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);border-radius:5px;padding:3px 9px;font-size:10px;font-weight:900;color:rgba(255,255,255,.5)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--navy);border:1px solid rgba(255,255,255,.13);border-radius:10px;padding:11px 18px;color:#fff;display:flex;align-items:center;gap:9px;box-shadow:var(--sh4);z-index:500;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;font-weight:700;font-size:13px}
+.toast.on{transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:768px){.topbar{padding:0 10px;gap:7px}.trust{grid-template-columns:1fr 1fr}.fg{grid-template-columns:1fr 1fr}.mbd{grid-template-columns:1fr}.cart{width:100%}.hero h1{font-size:36px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo" onclick="goHome()"><span class="logo-z">ZALE</span><span class="logo-sub">.com.ar</span></div>
+  <div class="srch">
+    <select class="srch-cat" id="srchCat">
+      <option value="">Todo</option>
+      <option value="electrónica">Electrónica</option>
+      <option value="hogar">Hogar</option>
+      <option value="salud">Salud/Belleza</option>
+      <option value="herramientas">Herramientas</option>
+      <option value="juguetes">Juguetes</option>
+      <option value="moda">Indumentaria</option>
+      <option value="gaming">Gaming</option>
+    </select>
+    <input id="srchIn" type="text" placeholder="Buscar productos...">
+    <button onclick="doSearch()">🔍</button>
+  </div>
+  <div class="nav-acts">
+    <button class="nb" onclick="showToast('👤','Iniciando...')">👤 Cuenta</button>
+    <button class="cart-nb" onclick="openCart()">🛒 Carrito <span class="cbdg" id="cbdg">0</span></button>
+    <button class="nb sell" onclick="showToast('🏪','Próximamente')">+ Vender</button>
+  </div>
+</header>
+<nav class="subnav">
+  <div class="sni active" onclick="goHome()">🏠 Inicio</div>
+  <div class="sni" onclick="goCategory('electrónica')">📱 Electrónica</div>
+  <div class="sni" onclick="goCategory('hogar')">🏠 Hogar</div>
+  <div class="sni" onclick="goCategory('salud')">💊 Salud y Belleza</div>
+  <div class="sni" onclick="goCategory('herramientas')">🔧 Herramientas</div>
+  <div class="sni" onclick="goCategory('juguetes')">🧸 Juguetes</div>
+  <div class="sni" onclick="goCategory('moda')">👗 Indumentaria</div>
+  <div class="sni" onclick="goCategory('gaming')">🎮 Gaming</div>
+  <div class="sni" onclick="goCategory('otros')">📦 Otros</div>
+  <div class="sni" onclick="goCategory('ofertas')">🔥 Ofertas</div>
+</nav>
+
+<div id="page-home" class="page active">
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge"><span></span>ZALE — EL MEJOR PRECIO GARANTIZADO</div>
+      <h1>Comprá con<br><em>total confianza</em></h1>
+      <p>Electrónica, hogar, herramientas, belleza y más. 3 cuotas sin interés.</p>
+      <div class="hero-btns">
+        <button class="btn-p" onclick="goCategory('electrónica')">Ver electrónica →</button>
+        <button class="btn-s" onclick="goCategory('ofertas')">🔥 Ver ofertas</button>
+      </div>
+      <div class="hero-kpis">
+        <div class="kpi" onclick="showAllProducts()" style="cursor:pointer"><div class="n">Todos</div><div class="l">Nuestros productos</div></div>
+        <div class="kpi"><div class="n">3 ctas</div><div class="l">Sin interés</div></div>
+        <div class="kpi"><div class="n">💰</div><div class="l">El mejor precio</div></div>
+      </div>
+    </div>
+  </section>
+  <div class="trust">
+    <div class="ti"><div class="tic b">🚚</div><div class="tit"><h4>Envío gratis</h4><p>En compras +$20.000</p></div></div>
+    <div class="ti"><div class="tic g">🔒</div><div class="tit"><h4>Compra segura</h4><p>Protección garantizada</p></div></div>
+    <div class="ti"><div class="tic o">💳</div><div class="tit"><h4>3 cuotas sin interés</h4><p>Cuota Simple BCRA</p></div></div>
+    <div class="ti"><div class="tic gd">↩️</div><div class="tit"><h4>Devolución fácil</h4><p>30 días sin preguntas</p></div></div>
+  </div>
+  <div class="sec" style="padding-top:4px">
+    <div class="sech"><div class="sect">Explorá por <span>Categoría</span></div></div>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+  <div class="filters-row" id="filtersRow"></div>
+  <div class="sec" id="prodSec">
+    <div class="sech">
+      <div class="sect">🏆 Top <span>Productos</span></div>
+      <span id="prodCount" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+    <div class="pgrid" id="prodGrid"></div>
+  </div>
+</div>
+
+<div id="page-cat" class="page">
+  <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));padding:28px 20px;position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:36px 36px"></div>
+    <div style="position:relative;z-index:1">
+      <div id="catTitle" style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:#fff;letter-spacing:1px"></div>
+      <div id="catSub" style="color:rgba(255,255,255,.5);font-size:13px;margin-top:3px"></div>
+    </div>
+  </div>
+  <div class="sec" style="padding-top:4px">
+    <div class="sech">
+      <div class="sect" id="catSectTitle"></div>
+      <div style="display:flex;align-items:center;gap:9px">
+        <select id="catSort" onchange="catSortProds()" style="background:var(--white);border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text);outline:none;cursor:pointer">
+          <option value="rel">Más relevantes</option>
+          <option value="asc">Menor precio</option>
+          <option value="desc">Mayor precio</option>
+        </select>
+        <span id="catCount" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+    </div>
+    <div class="pgrid" id="catProdGrid"></div>
+  </div>
+</div>
+
+<div id="page-search" class="page">
+  <div class="sec" style="padding-top:18px">
+    <div class="sech">
+      <div class="sect" id="searchTitle">Resultados</div>
+      <span id="searchCount" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+    <div class="pgrid" id="searchGrid"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="fg">
+    <div>
+      <div class="fb-logo">ZALE<span>.com.ar</span></div>
+      <p class="fb-desc">Tu marketplace argentino. Productos importados con el mejor precio para venta al público. 3 cuotas sin interés con tarjetas Cuota Simple BCRA.</p>
+      <div class="fb-soc"><div class="fsoc">📘</div><div class="fsoc">📸</div><div class="fsoc">🐦</div></div>
+    </div>
+    <div class="fc">
+      <h4>Comprar</h4>
+      <a class="fl">Cómo comprar</a><a class="fl">Métodos de pago</a>
+      <a class="fl">Envíos</a><a class="fl">Devoluciones</a>
+    </div>
+    <div class="fc">
+      <h4>Cuotas</h4>
+      <a class="fl">3 cuotas sin interés</a>
+      <a class="fl">6 cuotas sin interés</a>
+      <a class="fl">12 cuotas (CFT 21.07%)</a>
+      <a class="fl">Cuota Simple BCRA</a>
+    </div>
+    <div class="fc">
+      <h4>ZALE</h4>
+      <a class="fl">Sobre nosotros</a><a class="fl">Contacto</a><a class="fl">WhatsApp</a>
+    </div>
+    <div class="fc">
+      <h4>Ayuda</h4>
+      <a class="fl">Centro de ayuda</a><a class="fl">Privacidad</a><a class="fl">Términos</a>
+    </div>
+  </div>
+  <div class="fbot">
+    <p>© 2025 ZALE S.A. · CUIT 30-12345678-9 · Todos los derechos reservados</p>
+    <div class="fpay"><div class="fpi">VISA</div><div class="fpi">MC</div><div class="fpi">AMEX</div><div class="fpi">MP</div><div class="fpi">MODO</div></div>
+  </div>
+</footer>
+
+<div class="mOv" id="mOv" onclick="if(event.target.id==='mOv')closeM()">
+  <div class="modal">
+    <div class="mhd"><h2 id="mTitle">Producto</h2><button onclick="closeM()">✕</button></div>
+    <div class="mbd">
+      <div class="mimg"><img id="mImg" src="" alt="producto"></div>
+      <div>
+        <div class="m-sel"><span class="m-vck">✓</span><span id="mSeller"></span> · Tienda Oficial</div>
+        <div class="m-name" id="mName"></div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
+          <span style="color:var(--gold);font-size:14px">★★★★★</span>
+          <span id="mRat" style="font-weight:900;font-size:12px"></span>
+          <span id="mRev" style="color:var(--text3);font-size:11px"></span>
+        </div>
+        <div class="m-price" id="mPrice"></div>
+        <div class="m-was" id="mWas"></div>
+        <div class="m-green" id="mSave"></div>
+        <div class="m-stock"><span></span><span id="mStock"></span></div>
+        <div class="qty-row">
+          <button class="qb" onclick="dq(-1)">−</button>
+          <input class="qn" id="qIn" value="1" readonly>
+          <button class="qb" onclick="dq(1)">+</button>
+        </div>
+        <div class="m-acts">
+          <button class="mbuy" onclick="buyNow()">⚡ Comprar ahora</button>
+          <button class="madd" onclick="addFromM()">🛒 Agregar</button>
+        </div>
+        <div class="m-feats">
+          <div class="mf">🚚 Envío gratis +$35k</div>
+          <div class="mf">↩️ Dev. 30 días</div>
+          <div class="mf">🔒 Compra segura</div>
+          <div class="mf">⭐ Garantía oficial</div>
+        </div>
+        <div id="mCuotasTable"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cOv" id="cOv" onclick="closeCart()"></div>
+<div class="cart" id="cartEl">
+  <div class="chd"><h2>🛒 Mi Carrito</h2><button class="cclose" onclick="closeCart()">✕</button></div>
+  <div class="cbody" id="cbody"><div class="cempty"><div class="cic">🛒</div><p>Tu carrito está vacío</p></div></div>
+  <div class="cft" id="cft" style="display:none">
+    <div class="ctrow"><span class="lbl">Subtotal</span><span id="csub"></span></div>
+    <div class="ctrow"><span class="lbl">Envío</span><span style="color:var(--green);font-weight:800">GRATIS</span></div>
+    <div class="ctrow"><span class="lbl">Ahorrás</span><span id="cdisc" style="color:var(--green);font-weight:800"></span></div>
+    <div class="ctrow main"><span>Total</span><span id="ctotal"></span></div>
+    <div class="csave" id="csave"></div>
+    <div class="ccuota" id="ccuota"></div>
+    <button class="ckbt" onclick="showToast('🎉','Redirigiendo al checkout...')">Finalizar compra →</button>
+  </div>
+</div>
+<div class="toast" id="toastEl"><span id="toastIc">✅</span><span id="toastTx">ok</span></div>
+
+<script>
+const B='https://www.oncepuntos.com.ar/fotos/';
+const P=(id,name,mayo,cat,cod,badges=[])=>{
+  const price=Math.round(mayo*1.30),old=Math.round(price*1.20),disc=17;
+  const ship=price>=20000?'Envío gratis':'Envío gratis en compras +$20.000';
+  return{id,name,img:B+cod+'.jpg',price,old,disc,seller:'Zale',rating:4.6,reviews:40+id*9,cat,badges,ship,stock:'En stock'};
+};
+const PRODUCTS=[
+P(1,'Aspiradora Inalámbrica 2 en 1 Batería',76690,'electrónica','AV5731',['hot']),
+P(2,'Cámaras Seguridad Pack x4 CCTV',82041,'electrónica','CCTV-4W',['hot']),
+P(3,'Cámara Fija de Seguridad CM2362',29000,'electrónica','CM2362',['sale']),
+P(4,'Cámara Domo WiFi V380Pro',24077,'electrónica','RA1001',['sale']),
+P(5,'Cámara Foco Seguridad WiFi EXCC1',13380,'electrónica','EXCC1',['sale']),
+P(6,'Cámara Deportiva Tipo GoPro 4K',16050,'electrónica','B-JS302',[]),
+P(7,'Reloj Smart Watch AMOLED U9Pro',9810,'electrónica','U9PRO',[]),
+P(8,'Reloj Smart Watch Ultra 3 — 7 en 1',14270,'electrónica','ULTRA3',[]),
+P(9,'Reloj Smart Watch Ultra 9 — 7 en 1',14270,'electrónica','ULTRA9',[]),
+P(10,'Pendrive Kingston 128GB',8920,'electrónica','A-779-5',[]),
+P(11,'Pendrive Kingston 32GB',8200,'electrónica','A-779-3',[]),
+P(12,'Pendrive Kingston 16GB',6600,'electrónica','10079',[]),
+P(13,'Calentador de Mamadera USB',9987,'electrónica','AV5771',[]),
+P(14,'Iluminador Ambiental Auto/Casa RGB',54900,'electrónica','OP52721',['hot']),
+P(15,'Teclado USB HBL-TEC301',5350,'electrónica','HBL-TEC301',[]),
+P(16,'Cargador Auto 12V 48W',3390,'electrónica','HBL-CAR12V48W',[]),
+P(17,'Cargador Auto 12V USB',5170,'electrónica','CAR12VC',[]),
+P(18,'Cargador Rápido HBL-CP91',4990,'electrónica','HBL-CP91',[]),
+P(19,'Cargador USB HBL-TCP10',3920,'electrónica','HBL-TCP10',[]),
+P(20,'Cargador USB-C HBL-TCP11',5170,'electrónica','HBL-TCP11',[]),
+P(21,'Combo Inalámbrico Teclado+Mouse Pro',16940,'electrónica','HBL-COMTEC25B',[]),
+P(22,'Combo Inalámbrico Básico',10700,'electrónica','HBL-COMTEC002',[]),
+P(23,'Auricular Bluetooth M90',4990,'electrónica','M90',[]),
+P(24,'Auricular Deportivo Vincha BT',7130,'electrónica','A-YS24-105',[]),
+P(25,'Auricular Infantil Personajes',8560,'electrónica','EX210',[]),
+P(26,'Auriculares Inalámbricos M10',4458,'electrónica','M10-V',[]),
+P(27,'Parlante 12" Bluetooth con Luz',53510,'electrónica','GTS-1591',['hot']),
+P(28,'Parlante 8" Bluetooth GTS-1830',21400,'electrónica','GTS-1830',[]),
+P(29,'Parlante 4x2 Luz LED RGB GTS-2131',21400,'electrónica','GTS-2131',[]),
+P(30,'Parlante 4x2 Luz LED RGB GTS-2133',21400,'electrónica','GTS-2133',[]),
+P(31,'Parlante 6.5" Luz LED GTS-2046',16050,'electrónica','GTS-2046',[]),
+P(32,'Parlante 4" BT con Luz KTS-1919',9810,'electrónica','KTS-1919',[]),
+P(33,'Altavoz LED A036PLUS',8200,'electrónica','A036PLUS',[]),
+P(34,'Aro LED 26cm + Trípode 2 Metros',11590,'electrónica','NF-6',[]),
+P(35,'Aro LED 26cm RGB + Trípode 2 Metros',14270,'electrónica','ARO01LT',['new']),
+P(36,'Aro LED 30cm RGB + Trípode 2 Metros',14270,'electrónica','NF-0R',['new']),
+P(37,'Luz LED Alas Puerta Auto',14900,'electrónica','BR2718',['sale']),
+P(38,'Cerradura Smart Huella Digital',49900,'electrónica','BH-36',['new']),
+P(39,'Caloventor 800W con Control Remoto',12841,'hogar','AV5847',[]),
+P(40,'Caloventor de Diseño Premium',22828,'hogar','AV5848',[]),
+P(41,'Caloventor Redondo 2000W 3 Niveles',19760,'hogar','KJH-CH103',[]),
+P(42,'Convector Caloventor 2200W 3 Niveles',41070,'hogar','KJH-CH121CONV',['hot']),
+P(43,'Estufa de Cuarzo 800W 2 Niveles',15340,'hogar','KJH-204',[]),
+P(44,'Heladera Frigobar 50L Vintage Retro',205010,'hogar','KJH-50VIN',['hot']),
+P(45,'Calentador de Toallas 11 Barras',115930,'hogar','OR-TE250A',['hot']),
+P(46,'Fábrica de Pan 1.5kg Westinghouse',142590,'hogar','WH-BMSS002',['hot']),
+P(47,'Arrocera Eléctrica Multifunción',71340,'hogar','PA-701',['hot']),
+P(48,'Minipimer Batidora Acero Inox',19618,'hogar','MP-001',[]),
+P(49,'Minipimer Batidora Negra SO-618A',16051,'hogar','SO-618A',[]),
+P(50,'Minipimer Mixer 600W con Accesorios',39240,'hogar','HB-6005',[]),
+P(51,'Minipimer Multiprocesadora MP-003',32638,'hogar','MP-003',[]),
+P(52,'Minipimer Kanjihome 800W Blanca',18440,'hogar','LIC-BL0800LA0',[]),
+P(53,'Molinillo de Café Eléctrico',17820,'hogar','KJH-CGM001',[]),
+P(54,'Fuente de Chocolate Eléctrica',31826,'hogar','KJH-CFP003',[]),
+P(55,'Máquina para Hacer Pastas Manual',33117,'hogar','KJH-MP01',[]),
+P(56,'Especiero Condimentero 6 Frascos',14268,'hogar','AV5757',[]),
+P(57,'Mandolina Cortador Grande',12484,'hogar','DSH260477',[]),
+P(58,'Set de Cubiertos de Acero',11592,'hogar','DSH260568-1',[]),
+P(59,'Anafe Eléctrico 1 Hornalla 1000W',12040,'hogar','OA-ED004',[]),
+P(60,'Vaso Botella Térmica con Pico 1.2L',13376,'hogar','BOTE12',[]),
+P(61,'Vaso Coffe Térmico 450ml',17900,'hogar','OP52233-BRZ',[]),
+P(62,'Cesto Doble para Ropa',15520,'hogar','HBL-BA26',[]),
+P(63,'Canilla Gourmet Negra Monocomando',48150,'hogar','2LINEBLK',['hot']),
+P(64,'Canilla Negra con Extensible',24080,'hogar','JNEGRAEXT',[]),
+P(65,'Tabla de Baño con Secador Ultra',16051,'hogar','304328',[]),
+P(66,'Aplique Solar 8 LED Pack x2',13376,'hogar','SOL-13',[]),
+P(67,'Letrero Luminoso Cactus y Arroba',16943,'hogar','LETRE',['sale']),
+P(68,'Letrero Luminoso Home Love',8917,'hogar','LETREAMOR',['sale']),
+P(69,'Astronauta Proyector Estrellas',14110,'hogar','MELECH-118',['new']),
+P(70,'Depiladora Perfiladora Pro',8700,'salud','LY-T01-A',['sale']),
+P(71,'Depiladora Eléctrica a Hilo Daling',20956,'salud','147011',[]),
+P(72,'Saca Callos Pedicure Recargable',5707,'salud','AV5780',[]),
+P(73,'Removedor de Callos Eléctrico',6242,'salud','ZH-800',[]),
+P(74,'Masajeador Terapia Facial Radiofrecuencia',14860,'salud','OPCF07',['new']),
+P(75,'Masajeador Corporal Premium',8917,'salud','DSH260462',[]),
+P(76,'Masajeador Facial Recargable LSM-616',2680,'salud','LSM-616',[]),
+P(77,'Masajeador de Cuello Kanjihome',28221,'salud','MP-NECK003',[]),
+P(78,'Masajeador Premium 2681110',12300,'salud','2681110',[]),
+P(79,'Tensiómetro Digital JS46',11070,'salud','JS46',[]),
+P(80,'Aparato Alta Frecuencia Facial',22290,'salud','BN1238',[]),
+P(81,'Cortapelo Daling 6 en 1 Recargable',24969,'salud','DL-1859',[]),
+P(82,'Afeitadora 3 en 1 Recargable XR7907',11590,'salud','XR7907',[]),
+P(83,'Afeitadora Rasuradora 2 Rodillos',12840,'salud','SD-2002',[]),
+P(84,'Set Cortadora de Pelo 8 en 1',16410,'salud','HBL-CT26',[]),
+P(85,'Atornilladora Inalámbrica 12V',32010,'herramientas','KJT-AT121PB',[]),
+P(86,'Pistola de Impacto 21V Doble Batería',94530,'herramientas','EL40',['hot']),
+P(87,'Arrancador Portátil Auto con Luz',46370,'herramientas','TM15',[]),
+P(88,'Batería Recargable 21V 2000mAh',11590,'herramientas','B-21V',[]),
+P(89,'Set Herramientas Mooving Tools',5350,'herramientas','P764',[]),
+P(90,'Destornillador Blister x2',3567,'herramientas','XR-01706',[]),
+P(91,'Combo Gamer 4 en 1 HBL-403',27640,'gaming','HBL-403',['new']),
+P(92,'Silla Gamer Kanji KJ-39ST',168176,'gaming','KJ-39ST',['hot']),
+P(93,'Mesa de Dibujo con Proyector Astronauta',9890,'juguetes','6650',['new']),
+P(94,'Mesa de Dibujo Grande con Proyector',11990,'juguetes','6638',['new']),
+P(95,'Juguete Tren Piano Luz y Sonido',8917,'juguetes','NO131',[]),
+P(96,'Valija Átomos Juego Didáctico x100',10701,'juguetes','ATOMO',['new']),
+P(97,'Astronauta Proyector con Parlante BT',19620,'juguetes','1213',['new']),
+P(98,'Pelota del Mundial 2026 N5 Premium',6777,'deportes','F272NEW',[]),
+P(99,'Pelota de Vóley Premium V1-11',4100,'deportes','V1-11',[]),
+P(100,'Bata de Invierno con Orejas',33886,'moda','S660-7',['sale']),
+P(101,'Campera Rompeviento Running UV',10344,'moda','PA-133',[]),
+P(102,'Pijama con Capucha',14760,'moda','CONCAP',[]),
+P(103,'Pijama Sin Capucha',12300,'moda','SINCAP',[]),
+P(104,'Pijama Entero Monster Inc',17835,'moda','S6101-12',[]),
+P(105,'Bebedero Automático para Gato',26100,'otros','BEBGAT',['new']),
+P(106,'Cepillo Saca Pelo Mascota',8700,'otros','46040',[]),
+P(107,'Mochila Transporte Mascota',14710,'otros','PT-4133',[]),
+P(108,'Mochila de Messi 10 Escolar',14710,'otros','R3001',[]),
+P(109,'Aspiradora Portátil Compacta',5350,'otros','DSH260475',[]),
+P(110,'Tensiómetro Digital JS46 v2',11070,'salud','JS46',[]),
+];
+
+
+
+const CATS=[
+  {key:'electrónica',label:'Electrónica',img:B+'M90.jpg'},
+  {key:'hogar',label:'Hogar',img:B+'KJH-50VIN.jpg'},
+  {key:'salud',label:'Salud y Belleza',img:B+'OPCF07.jpg'},
+  {key:'herramientas',label:'Herramientas',img:B+'EL40.jpg'},
+  {key:'juguetes',label:'Juguetes',img:B+'6650.jpg'},
+  {key:'moda',label:'Indumentaria',img:B+'S660-7.jpg'},
+  {key:'deportes',label:'Deportes',img:B+'F272NEW.jpg'},
+  {key:'gaming',label:'Gaming',img:B+'KJ-39ST.jpg'},
+  {key:'otros',label:'Otros',img:B+'BEBGAT.jpg'},
+];
+
+// CUOTAS — Tasas reales Argentina 2025
+const CUOTAS=[
+  {n:1, label:'Contado',   recargo:0,    si:true},
+  {n:3, label:'3 cuotas', recargo:0,    si:true},
+  {n:6, label:'6 cuotas', recargo:0,    si:true},
+  {n:9, label:'9 cuotas', recargo:9.5,  si:false},
+  {n:12,label:'12 cuotas',recargo:21.07,si:false},
+  {n:18,label:'18 cuotas',recargo:38.5, si:false},
+  {n:24,label:'24 cuotas',recargo:58.0, si:false},
+];
+
+function fmt(n){return Math.round(n).toLocaleString('es-AR')}
+function cuotaCard(price){
+  const c3=Math.round(price/3);
+  const c12=Math.round(price*1.2107/12);
+  return '<strong>3 cuotas sin interés $'+fmt(c3)+'</strong> · 12c: $'+fmt(c12)+'/mes';
+}
+function cuotasTable(price){
+  const rows=CUOTAS.map(c=>{
+    const tot=Math.round(price*(1+c.recargo/100));
+    const cuota=Math.round(tot/c.n);
+    const tag=c.si?'<span class="tag-si">SIN INTERÉS</span>':'<span class="tag-ci">'+c.recargo.toFixed(2)+'% CFT</span>';
+    return '<div class="ct-row2'+(c.si?' si':'')+'"><div class="ct-cell"><b>'+c.label+'</b></div><div class="ct-cell big">$'+fmt(cuota)+'</div><div class="ct-cell">$'+fmt(tot)+'</div><div class="ct-cell">'+tag+'</div></div>';
+  }).join('');
+  return '<div class="ctw"><div class="ct-head">💳 Opciones de cuotas</div><div class="ct-header"><div class="ch">Cuotas</div><div class="ch">Valor c/cuota</div><div class="ch">Total a pagar</div><div class="ch">Condición</div></div>'+rows+'<div class="ct-legal">⚠️ 3 y 6 cuotas sin interés con tarjetas Cuota Simple (BCRA). Las demás cuotas aplican financiación bancaria. Verificá el CFT antes de confirmar.</div></div>';
+}
+
+let cart=[],cp=null,qty=1,wished=new Set(),catProds=[];
+
+function renderCats(){
+  document.getElementById('catGrid').innerHTML=CATS.map(c=>'<div class="cc" onclick="goCategory(\''+c.key+'\')"><img src="'+c.img+'" onerror="this.src=\''+B+'no_disponible.jpg\'"><div class="cc-name">'+c.label+'</div></div>').join('');
+}
+function renderFilters(){
+  const fs=['Todos','Precio ↑','Precio ↓','Envío gratis','Oferta','Novedades'];
+  document.getElementById('filtersRow').innerHTML='<span style="color:var(--text3);font-size:11px;font-weight:800;flex-shrink:0">Filtrar:</span>'+fs.map((f,i)=>'<div class="fchip'+(i===0?' on':'')+'" onclick="applyFilter(\''+f+'\',this)">'+f+'</div>').join('');
+}
+function applyFilter(f,el){
+  document.querySelectorAll('.fchip').forEach(e=>e.classList.remove('on'));el.classList.add('on');
+  let list=[...PRODUCTS];
+  if(f==='Precio ↑')list.sort((a,b)=>a.price-b.price);
+  else if(f==='Precio ↓')list.sort((a,b)=>b.price-a.price);
+  else if(f==='Envío gratis')list=list.filter(p=>p.price>=20000);
+  else if(f==='Oferta')list=list.filter(p=>p.badges.includes('sale'));
+  else if(f==='Novedades')list=list.filter(p=>p.badges.includes('new'));
+  else list=list.sort((a,b)=>b.price-a.price).slice(0,40);
+  const top=f==='Todos'?list.slice(0,40):list;
+  const title=f==='Todos'?'🏆 Top <span>Productos</span>':'Todos los <span>Productos</span>';
+  document.querySelector('#prodSec .sect').innerHTML=title;
+  renderProds(top,'prodGrid');
+  document.getElementById('prodCount').textContent=top.length+' productos';
+}
+function cardHTML(p){
+  const bmap={hot:'HOT 🔥',sale:'OFERTA',new:'NUEVO'};
+  const w=wished.has(p.id);
+  const sellerIcon = p.seller==='Mayorista Omega' ? '🟦' : '🟠';
+  return '<div class="pcard" onclick="openProd('+p.id+')"><div class="piw"><div class="pbdgs">'+p.badges.map(b=>'<span class="pbdg '+b+'">'+(bmap[b]||b)+'</span>').join('')+'</div><button class="pwsh'+(w?' on':'')+'" onclick="toggleWish(event,'+p.id+',this)">'+(w?'❤️':'🤍')+'</button><img class="pimg" src="'+p.img+'" onerror="this.src=\'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg\'"></div><div class="pcb"><div class="pc-sel"><span class="vck">✓</span> '+sellerIcon+' '+p.seller+'</div><div class="pc-name">'+p.name+'</div><div class="pc-stars"><span class="pc-s">★★★★★</span><span class="pc-r">'+p.rating+'</span><span class="pc-c">('+p.reviews+')</span></div><div class="pc-price"><span class="pnow">$'+fmt(p.price)+'</span><span class="pwas">$'+fmt(p.old)+'</span><span class="poff">-'+p.disc+'%</span></div><div class="pship">✓ '+p.ship+'</div><div class="pinst">'+cuotaCard(p.price)+'</div><button class="addbt" onclick="addCart(event,'+p.id+')">🛒 Agregar al carrito</button></div></div>';
+}
+function renderProds(list,gridId){
+  const el=document.getElementById(gridId);if(!el)return;
+  el.innerHTML=list.length?list.map(cardHTML).join(''):'<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text3)"><div style="font-size:44px;margin-bottom:10px">😕</div><div style="font-weight:800">Sin resultados</div></div>';
+}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goHome(){
+  document.querySelectorAll('.sni').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.sni').classList.add('active');
+  showPage('home');
+}
+function goCategory(cat){
+  document.querySelectorAll('.sni').forEach(n=>{
+    n.classList.remove('active');
+    const t=n.textContent.toLowerCase();
+    if((cat==='electrónica'&&t.includes('electr'))||(cat==='hogar'&&t.includes('hogar'))||(cat==='salud'&&t.includes('salud'))||(cat==='herramientas'&&t.includes('herram'))||(cat==='juguetes'&&t.includes('juguet'))||(cat==='moda'&&t.includes('indumen'))||(cat==='gaming'&&t.includes('gaming'))||(cat==='otros'&&t.includes('otros'))||(cat==='ofertas'&&t.includes('oferta'))||(cat==='deportes'&&t.includes('deport')))
+      n.classList.add('active');
+  });
+  const ci=CATS.find(c=>c.key===cat);
+  const label=ci?ci.label:cat.charAt(0).toUpperCase()+cat.slice(1);
+  document.getElementById('catTitle').textContent=label.toUpperCase();
+  document.getElementById('catSub').textContent='Encontrá lo que buscás al mejor precio';
+  document.getElementById('catSectTitle').innerHTML='<span>'+label+'</span>';
+  let prods=cat==='ofertas'?PRODUCTS.filter(p=>p.badges.includes('sale')||p.badges.includes('hot')):PRODUCTS.filter(p=>p.cat===cat);
+  if(!prods.length)prods=PRODUCTS;
+  catProds=[...prods];
+  document.getElementById('catCount').textContent=prods.length+' productos';
+  document.getElementById('catSort').value='rel';
+  renderProds(prods,'catProdGrid');
+  showPage('cat');
+}
+function catSortProds(){
+  const v=document.getElementById('catSort').value;
+  let list=[...catProds];
+  if(v==='asc')list.sort((a,b)=>a.price-b.price);
+  else if(v==='desc')list.sort((a,b)=>b.price-a.price);
+  renderProds(list,'catProdGrid');
+}
+function doSearch(){
+  const q=document.getElementById('srchIn').value.trim().toLowerCase();
+  const cat=document.getElementById('srchCat').value;
+  if(!q)return;
+  let r=PRODUCTS.filter(p=>p.name.toLowerCase().includes(q));
+  if(cat)r=r.filter(p=>p.cat===cat);
+  document.getElementById('searchTitle').innerHTML='Resultados para "<span style="color:var(--blue)">'+q+'</span>"';
+  document.getElementById('searchCount').textContent=r.length+' resultados';
+  renderProds(r,'searchGrid');
+  showPage('search');
+}
+document.getElementById('srchIn').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
+
+function openProd(id){
+  cp=PRODUCTS.find(x=>x.id==id);if(!cp)return;
+  qty=1;
+  document.getElementById('qIn').value=1;
+  document.getElementById('mTitle').textContent=cp.name;
+  document.getElementById('mImg').src=cp.img;
+  document.getElementById('mName').textContent=cp.name;
+  document.getElementById('mSeller').textContent=cp.seller;
+  document.getElementById('mRat').textContent=cp.rating;
+  document.getElementById('mRev').textContent='('+cp.reviews+' reseñas)';
+  document.getElementById('mPrice').textContent='$'+cp.price.toLocaleString('es-AR');
+  document.getElementById('mWas').textContent='Precio sin descuento: $'+cp.old.toLocaleString('es-AR');
+  document.getElementById('mSave').textContent='¡Ahorras $'+(cp.old-cp.price).toLocaleString('es-AR')+' ('+cp.disc+'% OFF)!';
+  document.getElementById('mStock').textContent=cp.stock;
+  document.getElementById('mCuotasTable').innerHTML=cuotasTable(cp.price);
+  document.getElementById('mOv').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeM(){document.getElementById('mOv').classList.remove('on');document.body.style.overflow=''}
+function dq(d){qty=Math.max(1,Math.min(99,qty+d));document.getElementById('qIn').value=qty}
+function addFromM(){if(!cp)return;for(let i=0;i<qty;i++)pushCart(cp);closeM();openCart()}
+function buyNow(){if(!cp)return;for(let i=0;i<qty;i++)pushCart(cp);closeM();openCart();showToast('⚡','Redirigiendo al pago...')}
+
+function addCart(e,id){e.stopPropagation();const p=PRODUCTS.find(x=>x.id==id);if(!p)return;pushCart(p);showToast('🛒','Agregado al carrito')}
+function pushCart(p){const x=cart.find(c=>c.id===p.id);if(x)x.qty++;else cart.push({...p,qty:1});updateCartUI()}
+function removeItem(i){cart.splice(i,1);updateCartUI();showToast('🗑️','Eliminado')}
+function updateCartUI(){
+  const total=cart.reduce((a,c)=>a+c.qty,0);
+  document.getElementById('cbdg').textContent=total;
+  const body=document.getElementById('cbody'),ft=document.getElementById('cft');
+  if(!cart.length){body.innerHTML='<div class="cempty"><div class="cic">🛒</div><p>Tu carrito está vacío</p></div>';ft.style.display='none';return;}
+  ft.style.display='block';
+  body.innerHTML=cart.map((c,i)=>'<div class="citem"><img src="'+c.img+'" onerror="this.src=\'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg\'"><div class="ci-info"><div class="ci-name">'+(c.name.length>34?c.name.slice(0,34)+'...':c.name)+'</div><div class="ci-price">$'+(c.price*c.qty).toLocaleString('es-AR')+'</div><div class="ci-q">Cant: '+c.qty+' · '+c.seller+'</div></div><button class="ci-rm" onclick="removeItem('+i+')">✕</button></div>').join('');
+  const sub=cart.reduce((a,c)=>a+c.price*c.qty,0);
+  const disc=cart.reduce((a,c)=>a+(c.old-c.price)*c.qty,0);
+  document.getElementById('csub').textContent='$'+sub.toLocaleString('es-AR');
+  document.getElementById('cdisc').textContent='$'+disc.toLocaleString('es-AR');
+  document.getElementById('ctotal').textContent='$'+sub.toLocaleString('es-AR');
+  document.getElementById('csave').textContent='🎉 Ahorras $'+disc.toLocaleString('es-AR')+' en esta compra';
+  document.getElementById('ccuota').textContent='💳 3 cuotas sin interés de $'+fmt(Math.round(sub/3))+' · 12c: $'+fmt(Math.round(sub*1.2107/12))+'/mes';
+}
+function openCart(){document.getElementById('cartEl').classList.add('on');document.getElementById('cOv').classList.add('on');document.body.style.overflow='hidden'}
+function closeCart(){document.getElementById('cartEl').classList.remove('on');document.getElementById('cOv').classList.remove('on');document.body.style.overflow=''}
+function toggleWish(e,id,btn){e.stopPropagation();if(wished.has(id)){wished.delete(id);btn.textContent='🤍';btn.classList.remove('on');showToast('💔','Eliminado de favoritos')}else{wished.add(id);btn.textContent='❤️';btn.classList.add('on');showToast('❤️','Guardado')}}
+let tTmr;
+function showToast(ic,msg){
+  document.getElementById('toastIc').textContent=ic;document.getElementById('toastTx').textContent=msg;
+  const el=document.getElementById('toastEl');el.classList.add('on');clearTimeout(tTmr);tTmr=setTimeout(()=>el.classList.remove('on'),2500);
+}
+function showAllProducts(){
+  document.querySelectorAll('.sni').forEach(n=>n.classList.remove('active'));
+  renderProds(PRODUCTS,'catProdGrid');
+  document.getElementById('catTitle').textContent='TODOS LOS PRODUCTOS';
+  document.getElementById('catSub').textContent='Encontrá lo que buscás al mejor precio';
+  document.getElementById('catSectTitle').innerHTML='Todos los <span>Productos</span>';
+  document.getElementById('catCount').textContent='';
+  document.getElementById('catSort').value='rel';
+  showPage('cat');
+}
+// INIT
+renderCats();renderFilters();
+const TOP40=PRODUCTS.slice().sort((a,b)=>b.price-a.price).slice(0,40);
+renderProds(TOP40,'prodGrid');
+document.getElementById('prodCount').textContent='Top 40 productos — Zale';
+</script>
+</body>
+</html>
