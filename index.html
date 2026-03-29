@@ -1157,10 +1157,16 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
         <div id="mapAddr" style="padding:9px 12px;font-size:11px;color:var(--text2);background:#fff;min-height:34px;line-height:1.5">Cargando dirección...</div>
       </div>
 
-      <div class="shField">
-        <label class="shLabel">Dirección o lugar de entrega</label>
-        <input class="shInput" id="shStreet" type="text" placeholder="Ej: Av. Rivadavia 1234">
-        <label class="shCheck"><input type="checkbox" id="noNum"> Mi calle no tiene número</label>
+      <div class="shRow2">
+        <div class="shField" style="flex:2">
+          <label class="shLabel">Calle</label>
+          <input class="shInput" id="shStreet" type="text" placeholder="Ej: Av. Rivadavia">
+        </div>
+        <div class="shField" style="flex:1">
+          <label class="shLabel">Número</label>
+          <input class="shInput" id="shNumero" type="text" placeholder="Ej: 1234" id="shNumero">
+          <label class="shCheck"><input type="checkbox" id="noNum" onchange="toggleNoNum(this)"> Sin número</label>
+        </div>
       </div>
 
       <div class="shRow2">
@@ -2514,7 +2520,11 @@ function openShipping(){
       form.style.display = 'none';
 
       // También prellenar los inputs del formulario (por si modifica)
-      document.getElementById('shStreet').value = addrLine;
+      const parts = addrLine.split(' ');
+      const numPart = parts.length > 1 ? parts[parts.length-1] : '';
+      const callePart = numPart.match(/^\d/) ? parts.slice(0,-1).join(' ') : addrLine;
+      document.getElementById('shStreet').value = callePart;
+      if(numPart.match(/^\d/)) document.getElementById('shNumero').value = numPart;
       document.getElementById('shCity').value   = d.ciudad;
       document.getElementById('shProv').value   = d.prov || '';
       if(d.cp) document.getElementById('shCp').value = d.cp;
@@ -2646,7 +2656,8 @@ function reverseGeocode(lat,lng){
       const city=a.suburb||a.city_district||a.city||a.town||a.village||'';
       const cp=a.postcode||'';
       const prov=a.state||'';
-      document.getElementById('shStreet').value=street+num;
+      document.getElementById('shStreet').value=street;
+      if(num.trim()) document.getElementById('shNumero').value=num.trim();
       document.getElementById('shCity').value=city;
       if(cp)document.getElementById('shCp').value=cp;
       // match provincia select
@@ -2672,21 +2683,30 @@ function updateCharCount(el){
 function setTipo(radio){
   document.querySelectorAll('.shTipoBox').forEach(b=>b.style.borderColor='');
 }
+function toggleNoNum(cb){
+  const numInput=document.getElementById('shNumero');
+  numInput.disabled=cb.checked;
+  if(cb.checked){numInput.value='';numInput.placeholder='Sin número';}
+  else{numInput.placeholder='Ej: 1234';}
+}
 function continueCheckout(){
   const street=document.getElementById('shStreet').value.trim();
+  const numero=document.getElementById('noNum').checked?'S/N':(document.getElementById('shNumero').value.trim());
   const city=document.getElementById('shCity').value.trim();
   const prov=document.getElementById('shProv').value;
   const cp=document.getElementById('shCp').value.trim();
   const name=document.getElementById('shName').value.trim();
   const phone=document.getElementById('shPhone').value.trim();
   const tipo=document.querySelector('input[name="tipo"]:checked').value;
-  if(!street){document.getElementById('shStreet').focus();showToast('⚠️','Ingresá la dirección');return;}
+  if(!street){document.getElementById('shStreet').focus();showToast('⚠️','Ingresá la calle');return;}
+  if(!numero && !document.getElementById('noNum').checked){document.getElementById('shNumero').focus();showToast('⚠️','Ingresá el número o marcá "Sin número"');return;}
   if(!name){document.getElementById('shName').focus();showToast('⚠️','Ingresá tu nombre');return;}
   if(!phone){document.getElementById('shPhone').focus();showToast('⚠️','Ingresá tu teléfono');return;}
 
+  const fullStreet=[street, numero].filter(Boolean).join(' ');
   const tipoLabel=tipo==='residencial'?'Residencial':'Laboral';
   const cpTxt=cp?'CP '+cp:'';
-  const addrLine=[street, city&&prov?city+', '+prov:'', cpTxt].filter(Boolean).join(' - ');
+  const addrLine=[fullStreet, city&&prov?city+', '+prov:'', cpTxt].filter(Boolean).join(' - ');
   document.getElementById('drAddrText').innerHTML=addrLine+'<br><span style="color:var(--text3);font-size:11px">'+tipoLabel+'</span>';
 
   const total=cart.reduce((a,c)=>a+c.price*c.qty,0);
