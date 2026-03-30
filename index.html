@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{
   --bg:#e8ecf2;--white:#fff;--surface2:#dde3ec;--border:#d0d8e4;--border2:#bfc9d8;
@@ -1241,6 +1242,8 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
             <span class="shTipoBox">🏢 Laboral</span>
           </label>
         </div>
+      </div><!-- /shTipos -->
+      </div><!-- /shField tipo -->
       </div><!-- /shAddrForm -->
     </div><!-- /shSection domicilio -->
 
@@ -1254,6 +1257,10 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
       <div class="shField">
         <label class="shLabel">Teléfono</label>
         <input class="shInput" id="shPhone" type="tel" placeholder="Ej: 11 2345-6789">
+      </div>
+      <div class="shField">
+        <label class="shLabel">Email <span class="shOpt">(para recibir confirmación)</span></label>
+        <input class="shInput" id="shEmail" type="email" placeholder="Ej: tu@email.com">
       </div>
     </div>
 
@@ -2541,6 +2548,7 @@ function openShipping(){
     }
     const nombre   = d.nombre   || '';
     const apellido = d.apellido || '';
+    const email    = d.email    || (window._fbUser ? window._fbUser.email : '');
 
     const hasAddr = calle && ciudad;
 
@@ -2570,16 +2578,20 @@ function openShipping(){
       if(form) form.style.display = 'block';
     }
 
-    // Datos de contacto
-    if(nombre || apellido){
+    // Datos de contacto (siempre prellenar)
+    {
       const shName = document.getElementById('shName');
       const fullName = [nombre, apellido].filter(Boolean).join(' ');
-      if(shName && !shName.value) shName.value = fullName;
+      if(shName && fullName && !shName.value) shName.value = fullName;
     }
-    if(celArea || celNum){
+    {
       const shPhone = document.getElementById('shPhone');
-      const phone   = [celArea, celNum].filter(Boolean).join(' ');
-      if(shPhone && !shPhone.value) shPhone.value = phone;
+      const phone   = [celArea, celNum].filter(Boolean).join(' ') || d.telefono || '';
+      if(shPhone && phone && !shPhone.value) shPhone.value = phone;
+    }
+    {
+      const shEmailEl = document.getElementById('shEmail');
+      if(shEmailEl && email && !shEmailEl.value) shEmailEl.value = email;
     }
 
     document.getElementById('shOv').classList.add('on');
@@ -2726,10 +2738,14 @@ function continueCheckout(){
   const cp=document.getElementById('shCp').value.trim();
   const name=document.getElementById('shName').value.trim();
   const phone=document.getElementById('shPhone').value.trim();
+  const emailVal=document.getElementById('shEmail').value.trim();
   const tipo=document.querySelector('input[name="tipo"]:checked').value;
   if(!street){document.getElementById('shStreet').focus();showToast('⚠️','Ingresá la dirección');return;}
   if(!name){document.getElementById('shName').focus();showToast('⚠️','Ingresá tu nombre');return;}
   if(!phone){document.getElementById('shPhone').focus();showToast('⚠️','Ingresá tu teléfono');return;}
+
+  // Guardar datos de envío en _checkoutShipping para usarlos en el mail
+  window._checkoutShipping = { street, city, prov, cp, name, phone, email: emailVal, tipo };
 
   const tipoLabel=tipo==='residencial'?'Residencial':'Laboral';
   const cpTxt=cp?'CP '+cp:'';
@@ -2781,6 +2797,9 @@ function goToPayment(){
     if(qrWrap) qrWrap.style.display = 'none';
     document.getElementById('pyMpBtnWrap').style.display = 'block';
     document.querySelector('.pyMpBtn').onclick = ()=>{
+      if (window.fbSaveOrder) window.fbSaveOrder(cart.map(c=>({id:c.id, name:c.name, price:c.price, qty:c.qty})));
+      sendOrderEmail('Mercado Pago');
+      clearCartAfterPurchase();
       window.open('https://mpago.la/'+MP_ALIAS,'_blank');
     };
   } else {
@@ -2818,7 +2837,48 @@ function copyVal(val, type){
     showToast('📋', type==='alias'?'Alias copiado':'CVU copiado');
   });
 }
-function clearCartAfterPurchase(){
+// ── Envío de mail del pedido ──────────────────────────────────────────────
+async function sendOrderEmail(metodoPago){
+  try {
+    const sh    = window._checkoutShipping || {};
+    const d     = window._ctaData || {};
+    const total = cart.reduce((a,c)=>a+c.price*c.qty,0);
+    const items = cart.map(c=>`• ${c.name} x${c.qty} — $${(c.price*c.qty).toLocaleString('es-AR')}`).join('\n');
+    const nombre  = sh.name  || [d.nombre, d.apellido].filter(Boolean).join(' ') || 'Sin nombre';
+    const telefono= sh.phone || [d.celArea, d.celNum].filter(Boolean).join(' ') || d.telefono || '';
+    const emailCli= sh.email || d.email || (window._fbUser ? window._fbUser.email : '') || '';
+    const dir     = [sh.street, sh.city, sh.prov, sh.cp ? 'CP '+sh.cp : ''].filter(Boolean).join(', ') || '';
+    const fecha   = new Date().toLocaleString('es-AR');
+
+    // EmailJS — servicio gratuito. Configuración:
+    //   1. Creá cuenta en https://www.emailjs.com/
+    //   2. Creá un Service (Gmail) con ID: 'service_zale'
+    //   3. Creá un Template con ID: 'template_pedido'
+    //   4. Copiá tu Public Key abajo
+    const EMAILJS_PUBLIC_KEY  = 'TU_PUBLIC_KEY';   // ← reemplazar
+    const EMAILJS_SERVICE_ID  = 'service_zale';     // ← reemplazar si usás otro ID
+    const EMAILJS_TEMPLATE_ID = 'template_pedido';  // ← reemplazar si usás otro ID
+
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:   'zalemarketplace@gmail.com',
+      fecha,
+      cliente:    nombre,
+      email_cliente: emailCli,
+      telefono,
+      direccion:  dir || 'No informada',
+      metodo:     metodoPago,
+      productos:  items,
+      total:      '$'+total.toLocaleString('es-AR'),
+    });
+    console.log('✅ Mail de pedido enviado');
+  } catch(e){
+    console.warn('⚠️ No se pudo enviar el mail del pedido:', e);
+    // No bloqueamos el flujo si falla el mail
+  }
+}
+
+function clearCartAfterPurchase(metodoPago){
   cart = [];
   updateCartUI();
   showToast('🎉','¡Pedido confirmado! Gracias por tu compra.');
@@ -2835,11 +2895,13 @@ function selectPayMethod(method){
     // Efectivo → WhatsApp
     closePayment();
     showToast('💵','Efectivo seleccionado');
+    const sh = window._checkoutShipping || {};
     const dE = window._ctaData || {};
-    const nombreE = [dE.nombre, dE.apellido].filter(Boolean).join(' ') || '';
-    const telE = [dE.celArea, dE.celNum].filter(Boolean).join(' ') || dE.telefono || '';
+    const nombreE = sh.name || [dE.nombre, dE.apellido].filter(Boolean).join(' ') || '';
+    const telE    = sh.phone || [dE.celArea, dE.celNum].filter(Boolean).join(' ') || dE.telefono || '';
+    const dirE    = sh.street ? [sh.street, sh.city, sh.prov].filter(Boolean).join(', ') : '';
     const infoE = nombreE
-      ? '\n👤 Cliente: '+nombreE+(telE?'\n📞 Tel: '+telE:'')
+      ? '\n👤 Cliente: '+nombreE+(telE?'\n📞 Tel: '+telE:'')+(dirE?'\n📍 Dirección: '+dirE:'')
       : '';
     const msg = encodeURIComponent(
       '¡Hola! Quiero pagar en efectivo mi compra en ZALE.'+infoE+'\n\n'+
@@ -2850,6 +2912,7 @@ function selectPayMethod(method){
     if (window.fbSaveOrder) {
       window.fbSaveOrder(cart.map(c=>({id:c.id, name:c.name, price:c.price, qty:c.qty})));
     }
+    sendOrderEmail('Efectivo (Rapipago/Pago Fácil)');
     clearCartAfterPurchase();
     setTimeout(()=>window.open('https://wa.me/541161528772?text='+msg,'_blank'),600);
   }
@@ -2857,11 +2920,12 @@ function selectPayMethod(method){
 function sendTransfWhatsapp(){
   const total = cart.reduce((a,c)=>a+c.price*c.qty,0);
   const items = cart.map(c=>c.name+' x'+c.qty).join(', ');
-  const d = window._ctaData || {};
-  const nombre = [d.nombre, d.apellido].filter(Boolean).join(' ') || '';
-  const dirParts = [d.calle, d.numero].filter(Boolean).join(' ') || d.direccion || '';
-  const ciudad = d.ciudad || '';
-  const tel = [d.celArea, d.celNum].filter(Boolean).join(' ') || d.telefono || '';
+  const sh = window._checkoutShipping || {};
+  const d  = window._ctaData || {};
+  const nombre   = sh.name  || [d.nombre, d.apellido].filter(Boolean).join(' ') || '';
+  const dirParts = sh.street || [d.calle, d.numero].filter(Boolean).join(' ') || d.direccion || '';
+  const ciudad   = sh.city  || d.ciudad || '';
+  const tel      = sh.phone || [d.celArea, d.celNum].filter(Boolean).join(' ') || d.telefono || '';
   const infoCliente = nombre
     ? '\n👤 Cliente: '+nombre+(tel?'\n📞 Tel: '+tel:'')+(dirParts?'\n📍 Dirección: '+[dirParts,ciudad].filter(Boolean).join(', '):'')
     : '';
@@ -2876,6 +2940,7 @@ function sendTransfWhatsapp(){
   if (window.fbSaveOrder) {
     window.fbSaveOrder(cart.map(c=>({id:c.id, name:c.name, price:c.price, qty:c.qty})));
   }
+  sendOrderEmail('Transferencia bancaria (alias: claudiodr.mp)');
   clearCartAfterPurchase();
   window.open('https://wa.me/541161528772?text='+msg,'_blank');
 }
