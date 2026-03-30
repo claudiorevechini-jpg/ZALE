@@ -459,8 +459,29 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
         }
 
         // Pre-cargar datos en _ctaData para el checkout
+        // Normalizar campos: el perfil Firebase puede usar 'direccion'/'telefono'/'provincia'
         if (profile) {
-          window._ctaData = { ...window._ctaData, ...profile };
+          let calle  = profile.calle  || '';
+          let numero = profile.numero || '';
+          if (!calle && profile.direccion) {
+            const m = profile.direccion.match(/^(.*?)\s+(\d+\w*)$/);
+            if (m) { calle = m[1].trim(); numero = m[2].trim(); }
+            else   { calle = profile.direccion; }
+          }
+          let celArea = profile.celArea || '';
+          let celNum  = profile.celNum  || '';
+          if (!celArea && !celNum && profile.telefono) {
+            const mt = profile.telefono.match(/^(\d{2,4})\s+(.+)$/);
+            if (mt) { celArea = mt[1]; celNum = mt[2]; }
+            else    { celNum = profile.telefono; }
+          }
+          window._ctaData = {
+            ...window._ctaData,
+            ...profile,
+            calle, numero,
+            prov: profile.prov || profile.provincia || '',
+            celArea, celNum
+          };
         }
 
         window._fbUser = user;
@@ -2503,7 +2524,25 @@ function openShipping(){
   closeCart();
   setTimeout(()=>{
     const d = _ctaData || {};
-    const hasAddr = d.calle && d.ciudad;
+
+    // Normalizar campos: el panel Firebase usa 'direccion'/'telefono'/'provincia'
+    // mientras que el checkout original usa 'calle'/'numero'/'celArea'/'celNum'/'prov'
+    // Tomamos el mejor valor disponible de ambos formatos
+    const calle  = d.calle  || (d.direccion ? (()=>{ const m=d.direccion.match(/^(.*?)\s+(\d+\w*)$/); return m?m[1].trim():d.direccion; })() : '');
+    const numero = d.numero || (d.direccion ? (()=>{ const m=d.direccion.match(/^(.*?)\s+(\d+\w*)$/); return m?m[2].trim():''; })() : '');
+    const ciudad = d.ciudad || '';
+    const prov   = d.prov   || d.provincia || '';
+    const cp     = d.cp     || '';
+
+    let celArea = d.celArea || '', celNum = d.celNum || '';
+    if (!celArea && !celNum && d.telefono) {
+      const mt = d.telefono.match(/^(\d{2,4})\s+(.+)$/);
+      if (mt) { celArea = mt[1]; celNum = mt[2]; } else { celNum = d.telefono; }
+    }
+    const nombre   = d.nombre   || '';
+    const apellido = d.apellido || '';
+
+    const hasAddr = calle && ciudad;
 
     const card    = document.getElementById('shAddrCard');
     const form    = document.getElementById('shAddrForm');
@@ -2512,34 +2551,34 @@ function openShipping(){
 
     if(hasAddr && card){
       // Mostrar tarjeta con datos precargados
-      const addrLine = [d.calle, d.numero].filter(Boolean).join(' ');
-      const cityLine = [d.ciudad, d.prov, d.cp ? 'CP '+d.cp : ''].filter(Boolean).join(', ');
+      const addrLine = [calle, numero].filter(Boolean).join(' ');
+      const cityLine = [ciudad, prov, cp ? 'CP '+cp : ''].filter(Boolean).join(', ');
       cardTxt.innerHTML = addrLine + '<br>' + cityLine;
-      const fullName = [d.nombre, d.apellido].filter(Boolean).join(' ');
-      const phone    = [d.celArea, d.celNum].filter(Boolean).join(' ');
+      const fullName = [nombre, apellido].filter(Boolean).join(' ');
+      const phone    = [celArea, celNum].filter(Boolean).join(' ');
       cardCtc.textContent = [fullName, phone ? '· ' + phone : ''].filter(Boolean).join(' ');
       card.style.display = 'block';
       form.style.display = 'none';
 
       // También prellenar los inputs del formulario (por si modifica)
       document.getElementById('shStreet').value = addrLine;
-      document.getElementById('shCity').value   = d.ciudad;
-      document.getElementById('shProv').value   = d.prov || '';
-      if(d.cp) document.getElementById('shCp').value = d.cp;
+      document.getElementById('shCity').value   = ciudad;
+      document.getElementById('shProv').value   = prov;
+      if(cp) document.getElementById('shCp').value = cp;
     } else {
       if(card) card.style.display = 'none';
       if(form) form.style.display = 'block';
     }
 
     // Datos de contacto
-    if(d.nombre || d.apellido){
+    if(nombre || apellido){
       const shName = document.getElementById('shName');
-      const fullName = [d.nombre, d.apellido].filter(Boolean).join(' ');
+      const fullName = [nombre, apellido].filter(Boolean).join(' ');
       if(shName && !shName.value) shName.value = fullName;
     }
-    if(d.celArea || d.celNum){
+    if(celArea || celNum){
       const shPhone = document.getElementById('shPhone');
-      const phone   = [d.celArea, d.celNum].filter(Boolean).join(' ');
+      const phone   = [celArea, celNum].filter(Boolean).join(' ');
       if(shPhone && !shPhone.value) shPhone.value = phone;
     }
 
@@ -3677,19 +3716,42 @@ function showPanelTab(tab) {
 }
 
 function savePanelProfile() {
-  const data = {
-    nombre:    document.getElementById('pNombre').value.trim(),
-    apellido:  document.getElementById('pApellido').value.trim(),
-    telefono:  document.getElementById('pTel').value.trim(),
-    ciudad:    document.getElementById('pCiudad').value.trim(),
-    direccion: document.getElementById('pDireccion').value.trim(),
-    provincia: document.getElementById('pProv').value.trim(),
-    cp:        document.getElementById('pCp').value.trim()
+  const nombre    = document.getElementById('pNombre').value.trim();
+  const apellido  = document.getElementById('pApellido').value.trim();
+  const telefono  = document.getElementById('pTel').value.trim();
+  const ciudad    = document.getElementById('pCiudad').value.trim();
+  const direccion = document.getElementById('pDireccion').value.trim();
+  const provincia = document.getElementById('pProv').value.trim();
+  const cp        = document.getElementById('pCp').value.trim();
+
+  const data = { nombre, apellido, telefono, ciudad, direccion, provincia, cp };
+
+  // Mapear al formato que usa openShipping() en _ctaData
+  // 'direccion' puede contener "Calle 123" — intentamos separar calle y número
+  let calle = direccion, numero = '';
+  const matchNum = direccion.match(/^(.*?)\s+(\d+\w*)$/);
+  if (matchNum) { calle = matchNum[1].trim(); numero = matchNum[2].trim(); }
+
+  // Teléfono: si viene "11 23456789" separar en área y número
+  let celArea = '', celNum = telefono;
+  const matchTel = telefono.match(/^(\d{2,4})\s+(.+)$/);
+  if (matchTel) { celArea = matchTel[1]; celNum = matchTel[2]; }
+
+  const ctaCompat = {
+    nombre, apellido,
+    calle, numero,
+    ciudad,
+    prov: provincia,
+    cp,
+    celArea, celNum,
+    // También guardar formato plano por si algo lo lee directo
+    telefono, direccion, provincia
   };
+
   if (window.fbSaveProfile) {
     window.fbSaveProfile(data).then(() => {
       window._fbProfile = { ...window._fbProfile, ...data };
-      window._ctaData   = { ...window._ctaData, ...data };
+      window._ctaData   = { ...window._ctaData, ...ctaCompat };
       showToast('✅', 'Datos guardados en la nube ☁️');
     });
   }
