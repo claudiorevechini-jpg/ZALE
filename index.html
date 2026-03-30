@@ -2838,40 +2838,76 @@ function copyVal(val, type){
   });
 }
 // ── Envío de mail del pedido ──────────────────────────────────────────────
+// CONFIGURACIÓN EMAILJS:
+//   1. Entrá a https://www.emailjs.com/ y creá una cuenta gratuita
+//   2. En "Email Services" → Add New Service → Gmail → conectá zalemarketplace@gmail.com → Service ID: 'service_zale'
+//   3. En "Email Templates" → Create New Template → pegá el contenido de abajo → Template ID: 'template_pedido'
+//   4. En "Account" → API Keys → copiá tu Public Key y pegala abajo
+//
+// ── TEMPLATE (pegalo en EmailJS → Email Templates → body) ─────────────────
+// Subject: 🛒 Nuevo pedido ZALE — {{cliente}}
+//
+// 📦 NUEVO PEDIDO EN ZALE.COM.AR
+// ═══════════════════════════════
+//
+// 📅 Fecha: {{fecha}}
+// 💳 Método de pago: {{metodo}}
+//
+// ── CLIENTE ──────────────────
+// 👤 Nombre: {{cliente}}
+// 📧 Email: {{email_cliente}}
+// 📞 Teléfono: {{telefono}}
+// 📍 Dirección: {{direccion}}
+//
+// ── PRODUCTOS ────────────────
+// {{productos}}
+//
+// ── TOTAL ────────────────────
+// 💰 TOTAL: {{total}}
+//
+// ════════════════════════════
+// Enviado automáticamente por ZALE.com.ar
+// ─────────────────────────────────────────────────────────────────────────
+
 async function sendOrderEmail(metodoPago){
   try {
     const sh    = window._checkoutShipping || {};
     const d     = window._ctaData || {};
     const total = cart.reduce((a,c)=>a+c.price*c.qty,0);
     const items = cart.map(c=>`• ${c.name} x${c.qty} — $${(c.price*c.qty).toLocaleString('es-AR')}`).join('\n');
-    const nombre  = sh.name  || [d.nombre, d.apellido].filter(Boolean).join(' ') || 'Sin nombre';
-    const telefono= sh.phone || [d.celArea, d.celNum].filter(Boolean).join(' ') || d.telefono || '';
-    const emailCli= sh.email || d.email || (window._fbUser ? window._fbUser.email : '') || '';
-    const dir     = [sh.street, sh.city, sh.prov, sh.cp ? 'CP '+sh.cp : ''].filter(Boolean).join(', ') || '';
-    const fecha   = new Date().toLocaleString('es-AR');
+    const nombre   = sh.name  || [d.nombre, d.apellido].filter(Boolean).join(' ') || 'Sin nombre';
+    const telefono = sh.phone || [d.celArea, d.celNum].filter(Boolean).join(' ') || d.telefono || 'No informado';
+    const emailCli = sh.email || d.email || (window._fbUser ? window._fbUser.email : '') || 'No informado';
+    const dir      = [sh.street, sh.city, sh.prov, sh.cp ? 'CP '+sh.cp : ''].filter(Boolean).join(', ') || 'No informada';
+    const fecha    = new Date().toLocaleString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const nroPedido = 'ZALE-' + Date.now().toString().slice(-8);
 
-    // EmailJS — servicio gratuito. Configuración:
-    //   1. Creá cuenta en https://www.emailjs.com/
-    //   2. Creá un Service (Gmail) con ID: 'service_zale'
-    //   3. Creá un Template con ID: 'template_pedido'
-    //   4. Copiá tu Public Key abajo
-    const EMAILJS_PUBLIC_KEY  = 'TU_PUBLIC_KEY';   // ← reemplazar
-    const EMAILJS_SERVICE_ID  = 'service_zale';     // ← reemplazar si usás otro ID
-    const EMAILJS_TEMPLATE_ID = 'template_pedido';  // ← reemplazar si usás otro ID
+    // ── REEMPLAZÁ ESTOS TRES VALORES ──────────────────────────────────────
+    const EMAILJS_PUBLIC_KEY  = 'NJi44lDqFrWYRZQUy';
+    const EMAILJS_SERVICE_ID  = 'service_zale';    // ← Service ID que pusiste al conectar Gmail
+    const EMAILJS_TEMPLATE_ID = 'template_pedido'; // ← Template ID que pusiste al crear el template
+    // ──────────────────────────────────────────────────────────────────────
+
+    if (EMAILJS_PUBLIC_KEY === 'TU_PUBLIC_KEY') {
+      console.warn('⚠️ EmailJS no configurado. Reemplazá TU_PUBLIC_KEY en sendOrderEmail()');
+      return;
+    }
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email:   'zalemarketplace@gmail.com',
+      to_email:      'zalemarketplace@gmail.com',
+      nro_pedido:    nroPedido,
       fecha,
-      cliente:    nombre,
+      cliente:       nombre,
       email_cliente: emailCli,
       telefono,
-      direccion:  dir || 'No informada',
-      metodo:     metodoPago,
-      productos:  items,
-      total:      '$'+total.toLocaleString('es-AR'),
+      direccion:     dir,
+      metodo:        metodoPago,
+      productos:     items,
+      total:         '$' + total.toLocaleString('es-AR'),
+      cant_items:    cart.reduce((a,c)=>a+c.qty, 0),
     });
-    console.log('✅ Mail de pedido enviado');
+    console.log('✅ Mail de pedido enviado —', nroPedido);
   } catch(e){
     console.warn('⚠️ No se pudo enviar el mail del pedido:', e);
     // No bloqueamos el flujo si falla el mail
