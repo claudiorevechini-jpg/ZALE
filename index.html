@@ -2818,6 +2818,11 @@ function copyVal(val, type){
     showToast('📋', type==='alias'?'Alias copiado':'CVU copiado');
   });
 }
+function clearCartAfterPurchase(){
+  cart = [];
+  updateCartUI();
+  showToast('🎉','¡Pedido confirmado! Gracias por tu compra.');
+}
 function selectPayMethod(method){
   const total = cart.reduce((a,c)=>a+c.price*c.qty,0);
   const items = cart.map(c=>c.name+' x'+c.qty).join(', ');
@@ -2830,28 +2835,48 @@ function selectPayMethod(method){
     // Efectivo → WhatsApp
     closePayment();
     showToast('💵','Efectivo seleccionado');
+    const dE = window._ctaData || {};
+    const nombreE = [dE.nombre, dE.apellido].filter(Boolean).join(' ') || '';
+    const telE = [dE.celArea, dE.celNum].filter(Boolean).join(' ') || dE.telefono || '';
+    const infoE = nombreE
+      ? '\n👤 Cliente: '+nombreE+(telE?'\n📞 Tel: '+telE:'')
+      : '';
     const msg = encodeURIComponent(
-      '¡Hola! Quiero pagar en efectivo mi compra en ZALE.\n\n'+
+      '¡Hola! Quiero pagar en efectivo mi compra en ZALE.'+infoE+'\n\n'+
       '🛒 Productos: '+items+'\n'+
       '💰 Total: $'+total.toLocaleString('es-AR')+'\n\n'+
       'Por favor indicame cómo abonar en efectivo (Rapipago / Pago Fácil). ¡Gracias!'
     );
+    if (window.fbSaveOrder) {
+      window.fbSaveOrder(cart.map(c=>({id:c.id, name:c.name, price:c.price, qty:c.qty})));
+    }
+    clearCartAfterPurchase();
     setTimeout(()=>window.open('https://wa.me/541161528772?text='+msg,'_blank'),600);
   }
 }
 function sendTransfWhatsapp(){
   const total = cart.reduce((a,c)=>a+c.price*c.qty,0);
   const items = cart.map(c=>c.name+' x'+c.qty).join(', ');
+  const d = window._ctaData || {};
+  const nombre = [d.nombre, d.apellido].filter(Boolean).join(' ') || '';
+  const dirParts = [d.calle, d.numero].filter(Boolean).join(' ') || d.direccion || '';
+  const ciudad = d.ciudad || '';
+  const tel = [d.celArea, d.celNum].filter(Boolean).join(' ') || d.telefono || '';
+  const infoCliente = nombre
+    ? '\n👤 Cliente: '+nombre+(tel?'\n📞 Tel: '+tel:'')+(dirParts?'\n📍 Dirección: '+[dirParts,ciudad].filter(Boolean).join(', '):'')
+    : '';
   const msg = encodeURIComponent(
-    '¡Hola! 😀 Quiero completar mi compra en ZALE.\n\n'+
+    '¡Hola! 😀 Quiero completar mi compra en ZALE.'+infoCliente+'\n\n'+
     '🛒 Productos: '+items+'\n'+
     '💰 Total: $'+total.toLocaleString('es-AR')+'\n\n'+
-    'Te comparto tus datos para que pueda *enviarte pesos a través de Mercado Pago* 👇\n\n'+
-    'Alias: claudiodr.mp\n'+
-    'CVU: 0000003100018141756801\n'+
-    'Nombre: Claudio Damian Revechini\n\n'+
+    'Ya realicé la transferencia al alias *claudiodr.mp*.\n'+
     'Te mando el comprobante en breve! ✅'
   );
+  // Guardar pedido en Firebase y vaciar carrito
+  if (window.fbSaveOrder) {
+    window.fbSaveOrder(cart.map(c=>({id:c.id, name:c.name, price:c.price, qty:c.qty})));
+  }
+  clearCartAfterPurchase();
   window.open('https://wa.me/541161528772?text='+msg,'_blank');
 }
 </script>
@@ -2919,7 +2944,7 @@ function sendTransfWhatsapp(){
 
       <!-- Botón MP (solo mobile) -->
       <div id="pyMpBtnWrap" style="display:none">
-        <button class="pyMpBtn" onclick="window.open('https://www.mercadopago.com.ar','_blank')">
+        <button class="pyMpBtn" onclick="window.open('https://mpago.la/'+MP_ALIAS,'_blank')">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="12" fill="#fff"/><path d="M4 12c0-4.418 3.582-8 8-8s8 3.582 8 8-3.582 8-8 8-8-3.582-8-8z" fill="#009ee3"/><path d="M8 12l2.5 2.5L16 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Pagar con Mercado Pago
         </button>
