@@ -554,12 +554,43 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: nombre + ' ' + apellido });
-        await saveUserProfile(cred.user.uid, {
+
+        // Merge profile data from registration form if available
+        const extra = window._regProfileData || {};
+        const profileData = {
           nombre, apellido, email,
           avatar:   '',
           wishlist: [],
-          pedidos:  []
-        });
+          pedidos:  [],
+          // Extra fields from the full registration form
+          telefono:  extra.telefono  || '',
+          ciudad:    extra.ciudad    || '',
+          direccion: extra.direccion || '',
+          provincia: extra.provincia || '',
+          cp:        extra.cp        || ''
+        };
+
+        await saveUserProfile(cred.user.uid, profileData);
+
+        // Also populate _ctaData so checkout works immediately
+        if (extra.nombre) {
+          window._ctaData = {
+            nombre:   extra.nombre,
+            apellido: extra.apellido,
+            calle:    extra.calle    || '',
+            numero:   extra.numero   || '',
+            ciudad:   extra.ciudad   || '',
+            prov:     extra.provincia|| '',
+            cp:       extra.cp       || '',
+            celArea:  extra.celArea  || '',
+            celNum:   extra.celNum   || '',
+            email:    email,
+            telefono: extra.telefono || '',
+            direccion:extra.direccion|| ''
+          };
+        }
+        window._regProfileData = null; // limpiar
+
         closeCuentaLogin();
         showToast('✅', '¡Cuenta creada! Bienvenido, ' + nombre + '!');
       } catch(e) {
@@ -3676,25 +3707,100 @@ function toggleShAddrEdit(){
         Registrarse con Google
       </button>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--text3);font-weight:700">o con email</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px">
-        <div>
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Nombre *</label>
-          <input id="regNombre" type="text" placeholder="Juan" style="width:100%;border:1.5px solid var(--border2);border-radius:9px;padding:10px 13px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+
+      <!-- Sección: Datos personales -->
+      <div style="background:var(--blue-l);border:1.5px solid rgba(0,87,255,.15);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:900;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px">👤 Datos personales</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Nombre *</label>
+            <input id="regNombre" type="text" placeholder="Juan" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          </div>
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Apellido *</label>
+            <input id="regApellido" type="text" placeholder="Pérez" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Teléfono / Celular *</label>
+          <input id="regTel" type="tel" placeholder="11 1234-5678" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+        </div>
+      </div>
+
+      <!-- Sección: Dirección de entrega -->
+      <div style="background:#f0f5ff;border:1.5px solid rgba(0,87,255,.12);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:900;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px">📍 Dirección de entrega</div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Calle y número *</label>
+          <input id="regDireccion" type="text" placeholder="Av. Corrientes 1234" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Ciudad / Barrio *</label>
+            <input id="regCiudad" type="text" placeholder="Merlo" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          </div>
+          <div>
+            <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Código Postal *</label>
+            <input id="regCp" type="text" placeholder="1722" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          </div>
         </div>
         <div>
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Apellido *</label>
-          <input id="regApellido" type="text" placeholder="Pérez" style="width:100%;border:1.5px solid var(--border2);border-radius:9px;padding:10px 13px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Provincia *</label>
+          <select id="regProv" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff;color:var(--text)" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'">
+            <option value="">Seleccioná tu provincia</option>
+            <option value="Buenos Aires">Buenos Aires</option>
+            <option value="CABA">Ciudad Autónoma de Buenos Aires</option>
+            <option value="Catamarca">Catamarca</option>
+            <option value="Chaco">Chaco</option>
+            <option value="Chubut">Chubut</option>
+            <option value="Córdoba">Córdoba</option>
+            <option value="Corrientes">Corrientes</option>
+            <option value="Entre Ríos">Entre Ríos</option>
+            <option value="Formosa">Formosa</option>
+            <option value="Jujuy">Jujuy</option>
+            <option value="La Pampa">La Pampa</option>
+            <option value="La Rioja">La Rioja</option>
+            <option value="Mendoza">Mendoza</option>
+            <option value="Misiones">Misiones</option>
+            <option value="Neuquén">Neuquén</option>
+            <option value="Río Negro">Río Negro</option>
+            <option value="Salta">Salta</option>
+            <option value="San Juan">San Juan</option>
+            <option value="San Luis">San Luis</option>
+            <option value="Santa Cruz">Santa Cruz</option>
+            <option value="Santa Fe">Santa Fe</option>
+            <option value="Santiago del Estero">Santiago del Estero</option>
+            <option value="Tierra del Fuego">Tierra del Fuego</option>
+            <option value="Tucumán">Tucumán</option>
+          </select>
         </div>
       </div>
-      <div style="margin-bottom:13px">
-        <label style="display:block;font-size:11px;font-weight:800;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Email *</label>
-        <input id="regEmail" type="email" placeholder="tu@email.com" style="width:100%;border:1.5px solid var(--border2);border-radius:9px;padding:10px 13px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+
+      <!-- Sección: Acceso -->
+      <div style="background:#fff8f0;border:1.5px solid rgba(255,98,0,.15);border-radius:10px;padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:10px;font-weight:900;color:var(--orange);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px">🔑 Acceso a tu cuenta</div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Email *</label>
+          <input id="regEmail" type="email" placeholder="tu@email.com" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Contraseña * (mín. 8 caracteres)</label>
+          <div style="position:relative">
+            <input id="regPw" type="password" placeholder="••••••••" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 38px 9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+            <button type="button" onclick="toggleRegPw('regPw',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;line-height:1;color:var(--text3)">👁️</button>
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Repetir contraseña *</label>
+          <div style="position:relative">
+            <input id="regPw2" type="password" placeholder="••••••••" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 38px 9px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+            <button type="button" onclick="toggleRegPw('regPw2',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;line-height:1;color:var(--text3)">👁️</button>
+          </div>
+        </div>
       </div>
-      <div style="margin-bottom:18px">
-        <label style="display:block;font-size:11px;font-weight:800;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Contraseña * (mín. 8 caracteres)</label>
-        <input id="regPw" type="password" placeholder="••••••••" style="width:100%;border:1.5px solid var(--border2);border-radius:9px;padding:10px 13px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
-      </div>
-      <button onclick="doRegister()" style="width:100%;background:var(--blue);border:none;border-radius:10px;padding:12px;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Crear cuenta</button>
+
+      <button onclick="doRegister()" style="width:100%;background:var(--blue);border:none;border-radius:10px;padding:13px;color:#fff;font-size:14px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 4px 16px rgba(0,87,255,.35);transition:background .2s" onmouseover="this.style.background='var(--blue-d)'" onmouseout="this.style.background='var(--blue)'">✅ Crear mi cuenta</button>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px">Tus datos de entrega quedarán guardados para futuros pedidos 🚀</div>
     </div>
   </div>
 </div>
@@ -3805,13 +3911,60 @@ function doLogin() {
 }
 
 function doRegister() {
-  const nombre   = document.getElementById('regNombre').value.trim();
-  const apellido = document.getElementById('regApellido').value.trim();
-  const email    = document.getElementById('regEmail').value.trim();
-  const pw       = document.getElementById('regPw').value;
-  if (!nombre || !apellido || !email || !pw) { showToast('⚠️','Completá todos los campos'); return; }
-  if (pw.length < 8) { showToast('⚠️','La contraseña debe tener al menos 8 caracteres'); return; }
+  const nombre     = document.getElementById('regNombre').value.trim();
+  const apellido   = document.getElementById('regApellido').value.trim();
+  const email      = document.getElementById('regEmail').value.trim();
+  const pw         = document.getElementById('regPw').value;
+  const pw2El      = document.getElementById('regPw2');
+  const pw2        = pw2El ? pw2El.value : pw;
+  const telEl      = document.getElementById('regTel');
+  const telefono   = telEl ? telEl.value.trim() : '';
+  const dirEl      = document.getElementById('regDireccion');
+  const direccion  = dirEl ? dirEl.value.trim() : '';
+  const ciudadEl   = document.getElementById('regCiudad');
+  const ciudad     = ciudadEl ? ciudadEl.value.trim() : '';
+  const provEl     = document.getElementById('regProv');
+  const provincia  = provEl ? provEl.value : '';
+  const cpEl       = document.getElementById('regCp');
+  const cp         = cpEl ? cpEl.value.trim() : '';
+
+  if (!nombre || !apellido)        { showToast('⚠️','Ingresá tu nombre y apellido'); return; }
+  if (!telefono)                   { showToast('⚠️','Ingresá tu teléfono'); return; }
+  if (!direccion)                  { showToast('⚠️','Ingresá tu dirección de entrega'); return; }
+  if (!ciudad)                     { showToast('⚠️','Ingresá tu ciudad o barrio'); return; }
+  if (!cp)                         { showToast('⚠️','Ingresá tu código postal'); return; }
+  if (!provincia)                  { showToast('⚠️','Seleccioná tu provincia'); return; }
+  if (!email)                      { showToast('⚠️','Ingresá tu email'); return; }
+  if (pw.length < 8)               { showToast('⚠️','La contraseña debe tener al menos 8 caracteres'); return; }
+  if (pw !== pw2)                  { showToast('⚠️','Las contraseñas no coinciden'); return; }
+
+  // Parsear calle/número para compatibilidad con _ctaData
+  let calle = direccion, numero = '';
+  const matchNum = direccion.match(/^(.*?)\s+(\d+\w*)$/);
+  if (matchNum) { calle = matchNum[1].trim(); numero = matchNum[2].trim(); }
+
+  // Parsear teléfono en área + número
+  let celArea = '', celNum = telefono;
+  const matchTel = telefono.match(/^(\d{2,4})\s+(.+)$/);
+  if (matchTel) { celArea = matchTel[1]; celNum = matchTel[2]; }
+
+  // Guardar perfil completo para precargar pedidos futuros
+  window._regProfileData = {
+    nombre, apellido, telefono, ciudad,
+    direccion, provincia, cp,
+    calle, numero, celArea, celNum,
+    prov: provincia
+  };
+
   if (window.fbRegister) window.fbRegister(email, pw, nombre, apellido);
+}
+
+function toggleRegPw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁️';
 }
 
 // ── Panel de cuenta logueada ──────────────────────────────────────────────
