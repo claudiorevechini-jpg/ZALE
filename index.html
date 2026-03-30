@@ -2893,7 +2893,11 @@ async function sendOrderEmail(metodoPago){
       return;
     }
 
+    const EMAILJS_TEMPLATE_CLIENTE = 'template_confirmacion'; // template de confirmación al cliente
+
     emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    // ── Mail 1: notificación interna a ZALE ──────────────────────────────
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
       to_email:      'zalemarketplace@gmail.com',
       nro_pedido:    nroPedido,
@@ -2907,7 +2911,22 @@ async function sendOrderEmail(metodoPago){
       total:         '$' + total.toLocaleString('es-AR'),
       cant_items:    cart.reduce((a,c)=>a+c.qty, 0),
     });
-    console.log('✅ Mail de pedido enviado —', nroPedido);
+    console.log('✅ Mail interno enviado —', nroPedido);
+
+    // ── Mail 2: confirmación al cliente ──────────────────────────────────
+    if (emailCli && emailCli !== 'No informado') {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENTE, {
+        to_email:   emailCli,
+        nro_pedido: nroPedido,
+        fecha,
+        cliente:    nombre,
+        productos:  items,
+        total:      '$' + total.toLocaleString('es-AR'),
+        metodo:     metodoPago,
+      });
+      console.log('✅ Confirmación enviada al cliente —', emailCli);
+    }
+
   } catch(e){
     console.warn('⚠️ No se pudo enviar el mail del pedido:', e);
     // No bloqueamos el flujo si falla el mail
