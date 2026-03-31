@@ -988,12 +988,16 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
         <!-- GALLERY -->
         <div style="background:var(--white);border-radius:var(--rxl);overflow:hidden;border:1.5px solid var(--border);margin-bottom:16px">
           <div style="display:flex;gap:0">
-            <!-- Thumbnails -->
-            <div id="pdpThumbs" style="display:flex;flex-direction:column;gap:8px;padding:16px 8px 16px 16px;width:72px;flex-shrink:0"></div>
-            <!-- Main image -->
-            <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;min-height:420px;background:#fafbfc;position:relative">
-              <img id="pdpMainImg" src="" alt="" style="max-width:100%;max-height:380px;object-fit:contain;transition:opacity .2s">
-              <div id="pdpBadgeArea" style="position:absolute;top:14px;left:14px;display:flex;flex-direction:column;gap:5px"></div>
+            <!-- Thumbnails sidebar -->
+            <div id="pdpThumbs" style="display:flex;flex-direction:column;gap:8px;padding:14px 8px 14px 14px;width:76px;flex-shrink:0;overflow-y:auto;max-height:440px"></div>
+            <!-- Main image with zoom -->
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;min-height:420px;background:#fafbfc;position:relative;overflow:hidden"
+              onmousemove="pdpZoomMove(event,this)" onmouseleave="pdpZoomLeave(this)">
+              <img id="pdpMainImg" src="" alt=""
+                style="max-width:100%;max-height:400px;object-fit:contain;transition:opacity .18s;cursor:zoom-in;pointer-events:none">
+              <div id="pdpBadgeArea" style="position:absolute;top:14px;left:14px;display:flex;flex-direction:column;gap:5px;z-index:2"></div>
+              <!-- Contador de fotos -->
+              <div id="pdpImgCount" style="position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,.45);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px"></div>
             </div>
           </div>
         </div>
@@ -1034,11 +1038,14 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
         <div style="background:var(--white);border-radius:var(--rxl);border:1.5px solid var(--border);padding:20px;margin-bottom:12px">
 
           <!-- Rating -->
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
             <span style="color:var(--gold);font-size:15px" id="pdpStars">★★★★★</span>
             <span id="pdpRating" style="font-size:12px;font-weight:900;color:var(--text2)"></span>
             <span id="pdpReviews" style="font-size:11px;color:var(--text3)"></span>
           </div>
+
+          <!-- Código SKU -->
+          <div id="pdpCodeBadge" style="display:none;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:800;color:var(--text3);margin-bottom:10px;width:fit-content;letter-spacing:.5px"></div>
 
           <!-- Title -->
           <h1 id="pdpTitle" style="font-size:17px;font-weight:900;color:var(--navy);line-height:1.4;margin-bottom:14px"></h1>
@@ -2414,11 +2421,18 @@ function applyFilter(f,el){
   renderProds(top,'prodGrid');
   document.getElementById('prodCount').textContent=top.length+' productos';
 }
+function cleanProdName(name, id) {
+  if (window.admCodeOverrides?.[id]) return name; // ya fue editado limpio
+  return name
+    .replace(/\s*\*?op\s+Cód\.?:?\s*[A-Z0-9\-_\.]+\s*$/i, '')
+    .replace(/\s*Cód\.?:?\s*[A-Z0-9\-_\.]+\s*$/i, '')
+    .trim() || name;
+}
 function cardHTML(p){
   const bmap={hot:'HOT 🔥',sale:'OFERTA',new:'NUEVO'};
   const w=wished.has(p.id);
   const sellerIcon = p.seller==='Mayorista Omega' ? '🟦' : '🟠';
-  return '<div class="pcard" onclick="openProd('+p.id+')"><div class="piw"><div class="pbdgs">'+p.badges.map(b=>'<span class="pbdg '+b+'">'+(bmap[b]||b)+'</span>').join('')+'</div><button class="pwsh'+(w?' on':'')+'" onclick="toggleWish(event,'+p.id+',this)">'+(w?'❤️':'🤍')+'</button><img class="pimg" src="'+p.img+'" onerror="this.src=\'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg\'"></div><div class="pcb"><div class="pc-sel"><span class="vck">✓</span> '+sellerIcon+' '+p.seller+'</div><div class="pc-name">'+p.name+'</div><div class="pc-stars"><span class="pc-s">★★★★★</span><span class="pc-r">'+p.rating+'</span><span class="pc-c">('+p.reviews+')</span></div><div class="pc-price"><span class="pnow">$'+fmt(p.price)+'</span><span class="pwas">$'+fmt(p.old)+'</span><span class="poff">-'+p.disc+'%</span></div><div class="pship">✓ '+p.ship+'</div><div class="pinst">'+cuotaCard(p.price)+'</div><button class="addbt" onclick="addCart(event,'+p.id+')">🛒 Agregar al carrito</button></div></div>';
+  return '<div class="pcard" onclick="openProd('+p.id+')"><div class="piw"><div class="pbdgs">'+p.badges.map(b=>'<span class="pbdg '+b+'">'+(bmap[b]||b)+'</span>').join('')+'</div><button class="pwsh'+(w?' on':'')+'" onclick="toggleWish(event,'+p.id+',this)">'+(w?'❤️':'🤍')+'</button><img class="pimg" src="'+p.img+'" onerror="this.src=\'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg\'"></div><div class="pcb"><div class="pc-sel"><span class="vck">✓</span> '+sellerIcon+' '+p.seller+'</div><div class="pc-name">'+cleanProdName(p.name,p.id)+'</div><div class="pc-stars"><span class="pc-s">★★★★★</span><span class="pc-r">'+p.rating+'</span><span class="pc-c">('+p.reviews+')</span></div><div class="pc-price"><span class="pnow">$'+fmt(p.price)+'</span><span class="pwas">$'+fmt(p.old)+'</span><span class="poff">-'+p.disc+'%</span></div><div class="pship">✓ '+p.ship+'</div><div class="pinst">'+cuotaCard(p.price)+'</div><button class="addbt" onclick="addCart(event,'+p.id+')">🛒 Agregar al carrito</button></div></div>';
 }
 function renderProds(list,gridId){
   const el=document.getElementById(gridId);if(!el)return;
@@ -2688,9 +2702,21 @@ function openProd(id){
   qty = 1;
   document.getElementById('qIn').value = 1;
 
-  // --- Title ---
-  document.getElementById('pdpTitle').textContent = cp.name;
-  document.title = cp.name + (cp.price>=20000 ? ' | Envío gratis' : '');
+  // --- Title --- mostrar nombre limpio (sin el código)
+  const cleanPdpName = (() => {
+    // Primero verificar si el admin ya lo tiene limpio en admCodeOverrides
+    if (window.admCodeOverrides?.[cp.id]) {
+      // El nombre ya fue editado sin el código
+      return cp.name;
+    }
+    // Si no, limpiar el patrón " *op Cód.: XXXX" o " Cód.: XXXX" del nombre
+    return cp.name
+      .replace(/\s*\*?op\s+Cód\.?:?\s*[A-Z0-9\-_\.]+\s*$/i, '')
+      .replace(/\s*Cód\.?:?\s*[A-Z0-9\-_\.]+\s*$/i, '')
+      .trim();
+  })();
+  document.getElementById('pdpTitle').textContent = cleanPdpName;
+  document.title = cleanPdpName + (cp.price>=20000 ? ' | Envío gratis' : '');
 
   // --- Breadcrumb ---
   const catLabel = cp.cat.charAt(0).toUpperCase()+cp.cat.slice(1);
@@ -2702,15 +2728,42 @@ function openProd(id){
     '<span style="color:var(--text4)">›</span>'+
     '<span style="color:var(--text3)">'+cp.name+'</span>';
 
-  // --- Gallery ---
-  const imgs = [cp.img, cp.img, cp.img]; // repeated since single image per product
-  document.getElementById('pdpMainImg').src = cp.img;
+  // --- Gallery --- leer de admGalleryStore primero, luego p.images, luego duplicar la única
+  const storedGallery = window.admGalleryStore?.[cp.id];
+  let imgs;
+  if(storedGallery && storedGallery.length) {
+    imgs = storedGallery;
+  } else if(cp.images && cp.images.length > 1) {
+    imgs = cp.images;
+  } else {
+    imgs = [cp.img]; // solo una imagen real, no duplicar
+  }
+
+  const mainImgEl = document.getElementById('pdpMainImg');
+  mainImgEl.src = imgs[0] || cp.img;
+
   document.getElementById('pdpThumbs').innerHTML = imgs.map((src,i)=>
-    `<div onclick="document.getElementById('pdpMainImg').src='${src}';this.parentNode.querySelectorAll('div').forEach(d=>d.style.borderColor='var(--border)');this.style.borderColor='var(--blue)'"
-      style="width:52px;height:52px;border-radius:8px;border:2px solid ${i===0?'var(--blue)':'var(--border)'};overflow:hidden;cursor:pointer;background:#fff;flex-shrink:0;transition:border-color .2s">
-      <img src="${src}" style="width:100%;height:100%;object-fit:contain;padding:3px" onerror="this.src='https://www.oncepuntos.com.ar/fotos/no_disponible.jpg'">
+    `<div onclick="pdpSelectImg('${src.replace(/'/g,"\\'")}',this)"
+      style="width:56px;height:56px;border-radius:9px;border:2.5px solid ${i===0?'var(--blue)':'var(--border)'};overflow:hidden;cursor:pointer;background:#fff;flex-shrink:0;transition:all .2s;box-shadow:${i===0?'0 0 0 2px rgba(0,87,255,.18)':'none'}"
+      onmouseover="if(this.style.borderColor!='var(--blue)')this.style.borderColor='var(--border2)'"
+      onmouseout="if(this.style.borderColor!='var(--blue)')this.style.borderColor='var(--border)'">
+      <img src="${src}" style="width:100%;height:100%;object-fit:contain;padding:4px" onerror="this.src='https://www.oncepuntos.com.ar/fotos/no_disponible.jpg'">
     </div>`
   ).join('');
+
+  // Agregar contador de fotos si hay más de 1
+  const countEl = document.getElementById('pdpImgCount');
+  if(countEl) countEl.textContent = imgs.length > 1 ? imgs.length + ' fotos' : '';
+
+  // --- Code badge ---
+  const codeEl = document.getElementById('pdpCodeBadge');
+  // Extraer código: primero de admCodeOverrides, luego de p.sku, luego del nombre
+  let skuVal = window.admCodeOverrides?.[cp.id] || cp.sku || '';
+  if(!skuVal){
+    const m = cp.name.match(/Cód\.?:?\s*([A-Z0-9\-_]+)/i);
+    if(m) skuVal = m[1];
+  }
+  if(codeEl) { codeEl.style.display = skuVal ? '' : 'none'; if(skuVal) codeEl.textContent = 'SKU: ' + skuVal; }
 
   // --- Badges ---
   const bmap={hot:'🔥 HOT',sale:'🏷️ OFERTA',new:'🆕 NUEVO'};
@@ -2806,8 +2859,39 @@ function cuotasTablePDP(price){
     </div>`).join('');
 }
 
-function closeM(){
-  document.getElementById('pdpPage').style.display = 'none';
+// ── PDP Gallery helpers ───────────────────────────────────────────────────
+function pdpSelectImg(src, thumb){
+  const mainImg = document.getElementById('pdpMainImg');
+  mainImg.style.opacity = '0';
+  setTimeout(()=>{ mainImg.src = src; mainImg.style.opacity = '1'; }, 120);
+  document.querySelectorAll('#pdpThumbs div').forEach(d => {
+    d.style.borderColor = 'var(--border)';
+    d.style.boxShadow   = 'none';
+  });
+  if(thumb){
+    thumb.style.borderColor = 'var(--blue)';
+    thumb.style.boxShadow   = '0 0 0 2px rgba(0,87,255,.18)';
+  }
+}
+
+function pdpZoomMove(e, container){
+  const img = container.querySelector('img');
+  if(!img) return;
+  const rect = container.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
+  const y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+  img.style.transformOrigin = `${x}% ${y}%`;
+  img.style.transform = 'scale(1.9)';
+  img.style.cursor    = 'zoom-in';
+  container.style.overflow = 'hidden';
+}
+function pdpZoomLeave(container){
+  const img = container.querySelector('img');
+  if(!img) return;
+  img.style.transform = 'scale(1)';
+  img.style.cursor    = 'zoom-in';
+}
+
   document.body.style.overflow = '';
   document.title = _defaultTitle;
 }
@@ -3613,66 +3697,104 @@ function sendTransfWhatsapp(){
         <h2 style="font-size:13px">✏️ Editar producto</h2>
         <button onclick="admCloseEdit()">✕</button>
       </div>
-      <div style="padding:20px;max-height:72vh;overflow-y:auto">
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start;margin-bottom:16px">
-          <div style="text-align:center">
-            <img id="admEditImg" src="" style="width:110px;height:110px;object-fit:contain;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);padding:6px;display:block;margin:0 auto 8px"/>
-            <label style="font-size:10px;font-weight:800;color:var(--blue);cursor:pointer;display:block">
-              📎 Cambiar imagen
-              <input type="file" id="admImgFile" accept="image/*" style="display:none" onchange="admPreviewImg(this)"/>
-            </label>
-            <div style="font-size:9px;color:var(--text3);margin-top:3px">o pegá una URL:</div>
-            <input id="admImgUrl" type="text" placeholder="https://..." oninput="admImgFromUrl(this)" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:4px 6px;font-size:10px;margin-top:4px;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/>
+      <div style="padding:20px;max-height:76vh;overflow-y:auto">
+
+        <!-- GALERÍA DE IMÁGENES -->
+        <div style="margin-bottom:18px">
+          <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+            <span>🖼️ Fotos del producto</span>
+            <span style="font-size:10px;color:var(--text3);font-weight:600">La 1ª es la principal · arrastrá para reordenar</span>
           </div>
-          <div>
-            <div class="adm-field"><label>Nombre</label><input type="text" id="admEditName" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <div class="adm-field"><label>Precio</label><input type="number" id="admEditPrice" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div>
-              <div class="adm-field"><label>Categoría</label>
-                <select id="admEditCat" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff;color:var(--text)">
-                  <option value="electrónica">Electrónica</option>
-                  <option value="hogar">Hogar</option>
-                  <option value="salud">Salud y Belleza</option>
-                  <option value="herramientas">Herramientas</option>
-                  <option value="juguetes">Juguetes</option>
-                  <option value="moda">Indumentaria</option>
-                  <option value="deportes">Deportes</option>
-                  <option value="gaming">Gaming</option>
-                  <option value="bazar">Bazar</option>
-                  <option value="mate">Mate y Termos</option>
-                  <option value="otros">Otros</option>
-                </select>
-              </div>
-            </div>
-            <div class="adm-field"><label>Badges</label>
-              <div style="display:flex;gap:8px;margin-top:4px">
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="admBadgeHot"> 🔥 Hot</label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="admBadgeSale"> 🏷️ Sale</label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="admBadgeNew"> 🆕 Nuevo</label>
-              </div>
+          <!-- Miniaturas editables -->
+          <div id="admGallery" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+          <!-- Agregar foto -->
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;background:var(--blue-l);border:1.5px dashed var(--blue);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;color:var(--blue);transition:all .2s;flex-shrink:0" onmouseover="this.style.background='#cddeff'" onmouseout="this.style.background='var(--blue-l)'">
+              📎 Subir foto
+              <input type="file" id="admImgFileMulti" accept="image/*" multiple style="display:none" onchange="admAddImgsFromFile(this)"/>
+            </label>
+            <div style="display:flex;gap:6px;flex:1;min-width:200px">
+              <input id="admImgUrlAdd" type="text" placeholder="Pegá una URL de imagen…"
+                style="flex:1;border:1.5px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none"
+                onkeydown="if(event.key==='Enter'){admAddImgFromUrl();event.preventDefault()}"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+              <button onclick="admAddImgFromUrl()" style="background:var(--blue);border:none;border-radius:8px;padding:8px 13px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif">+ Agregar</button>
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button onclick="admSaveEdit()" style="flex:1;background:var(--blue);border:none;border-radius:9px;padding:11px;color:#fff;font-size:13px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">💾 Guardar cambios</button>
-          <button onclick="admCloseEdit()" style="background:var(--bg);border:1.5px solid var(--border2);border-radius:9px;padding:11px 18px;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Cancelar</button>
+
+        <!-- DATOS DEL PRODUCTO -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="adm-field" style="margin-bottom:0">
+            <label>Nombre del producto</label>
+            <input type="text" id="admEditName" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          </div>
+          <div class="adm-field" style="margin-bottom:0">
+            <label>Código (SKU)</label>
+            <input type="text" id="admEditCode" placeholder="Ej: CCTV-4W" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="adm-field" style="margin-bottom:0">
+            <label>Precio</label>
+            <input type="number" id="admEditPrice" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          </div>
+          <div class="adm-field" style="margin-bottom:0">
+            <label>Categoría</label>
+            <select id="admEditCat" style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff;color:var(--text)">
+              <option value="electrónica">Electrónica</option>
+              <option value="hogar">Hogar</option>
+              <option value="salud">Salud y Belleza</option>
+              <option value="herramientas">Herramientas</option>
+              <option value="juguetes">Juguetes</option>
+              <option value="moda">Indumentaria</option>
+              <option value="deportes">Deportes</option>
+              <option value="gaming">Gaming</option>
+              <option value="bazar">Bazar</option>
+              <option value="mate">Mate y Termos</option>
+              <option value="otros">Otros</option>
+            </select>
+          </div>
+        </div>
+        <div class="adm-field">
+          <label>Badges</label>
+          <div style="display:flex;gap:14px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)"><input type="checkbox" id="admBadgeHot" style="accent-color:var(--red)"> 🔥 Más vendido</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)"><input type="checkbox" id="admBadgeSale" style="accent-color:var(--orange)"> 🏷️ Oferta</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2)"><input type="checkbox" id="admBadgeNew" style="accent-color:var(--green)"> 🆕 Nuevo</label>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="admSaveEdit()" style="flex:1;background:var(--blue);border:none;border-radius:9px;padding:12px;color:#fff;font-size:13px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 3px 12px rgba(0,87,255,.3)">💾 Guardar cambios</button>
+          <button onclick="admCloseEdit()" style="background:var(--bg);border:1.5px solid var(--border2);border-radius:9px;padding:12px 18px;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Cancelar</button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+<style>
+.adm-gallery-thumb{position:relative;width:80px;height:80px;border-radius:9px;overflow:hidden;border:2px solid var(--border);background:var(--bg);flex-shrink:0;cursor:grab;transition:border-color .2s}
+.adm-gallery-thumb:first-child{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,87,255,.2)}
+.adm-gallery-thumb:first-child::before{content:'Principal';position:absolute;bottom:0;left:0;right:0;background:var(--blue);color:#fff;font-size:8px;font-weight:900;text-align:center;padding:2px 0;z-index:2}
+.adm-gallery-thumb img{width:100%;height:100%;object-fit:contain;padding:4px}
+.adm-gallery-thumb .adm-rm-img{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border:none;border-radius:50%;width:18px;height:18px;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1;opacity:0;transition:opacity .2s}
+.adm-gallery-thumb:hover .adm-rm-img{opacity:1}
+.adm-gallery-thumb.drag-over{border-color:var(--orange);background:var(--orange-l)}
+</style>
+
 
 
 
 <script>
 // ===== ADMIN PRODUCT MANAGER =====
-let admEditId = null;
-let admImgData = null; // stores base64 or URL for edited image
-// override images map: id -> new src
-if(!window.admImgOverrides) window.admImgOverrides = {};
+let admEditId   = null;
+let admGalleryImgs = []; // array of src strings (base64 or URL)
+if(!window.admImgOverrides)  window.admImgOverrides  = {};
+if(!window.admGalleryStore)  window.admGalleryStore  = {}; // id -> [img1,img2,...]
+if(!window.admCodeOverrides) window.admCodeOverrides = {}; // id -> code string
 
-// Patch cardHTML to use override images
 const _origP = P;
 
 function openAdmin(){
@@ -3703,7 +3825,6 @@ function doAdmLogin(){
 }
 
 function admInit(){
-  // populate category filter
   const cats=[...new Set(PRODUCTS.map(p=>p.cat))].sort();
   const sel=document.getElementById('admCatFilter');
   sel.innerHTML='<option value="">Todas las categorías</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -3714,19 +3835,27 @@ function admRender(){
   const q=(document.getElementById('admSearch').value||'').toLowerCase();
   const cat=document.getElementById('admCatFilter').value;
   const list=PRODUCTS.filter(p=>{
-    const matchQ=!q||p.name.toLowerCase().includes(q);
+    const matchQ=!q||p.name.toLowerCase().includes(q)||(window.admCodeOverrides[p.id]||p.sku||'').toLowerCase().includes(q);
     const matchC=!cat||p.cat===cat;
     return matchQ&&matchC;
   });
   document.getElementById('admCount').textContent=list.length+' productos';
   document.getElementById('admList').innerHTML=list.map(p=>{
-    const imgSrc=window.admImgOverrides[p.id]||p.img;
+    const imgs = window.admGalleryStore[p.id] || [];
+    const imgSrc = imgs[0] || window.admImgOverrides[p.id] || p.img;
+    const code = window.admCodeOverrides[p.id] || p.sku || '';
     const badgeHtml=p.badges.map(b=>({hot:'🔥',sale:'🏷️',new:'🆕'}[b]||b)).join(' ');
+    const extraCount = imgs.length > 1 ? `<span style="font-size:9px;background:var(--blue-l);color:var(--blue);border-radius:4px;padding:1px 5px;font-weight:800">+${imgs.length-1} fotos</span>` : '';
     return `<div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px">
       <img src="${imgSrc}" onerror="this.src='https://www.oncepuntos.com.ar/fotos/no_disponible.jpg'" style="width:48px;height:48px;object-fit:contain;background:#fff;border-radius:7px;flex-shrink:0;padding:2px;border:1px solid var(--border)"/>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${p.cat} &nbsp;|&nbsp; <span style="color:var(--blue);font-weight:800">$${fmt(p.price)}</span>${badgeHtml?' &nbsp;'+badgeHtml:''}</div>
+        <div style="font-size:11px;color:var(--text3);display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${code?`<span style="background:var(--bg);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800;color:var(--text2)">#${code}</span>`:''}
+          <span>${p.cat}</span> <span style="color:var(--blue);font-weight:800">$${fmt(p.price)}</span>
+          ${badgeHtml?'<span>'+badgeHtml+'</span>':''}
+          ${extraCount}
+        </div>
       </div>
       <button onclick="admOpenEdit(${p.id})" style="background:var(--blue-l);border:1.5px solid var(--blue);border-radius:8px;padding:6px 12px;color:var(--blue);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;flex-shrink:0">✏️ Editar</button>
     </div>`;
@@ -3734,21 +3863,39 @@ function admRender(){
 }
 
 function admOpenEdit(id){
-  admEditId=id;
-  admImgData=null;
-  const p=PRODUCTS.find(x=>x.id===id);
+  admEditId = id;
+  admGalleryImgs = [];
+  const p = PRODUCTS.find(x=>x.id===id);
   if(!p) return;
-  const imgSrc=window.admImgOverrides[id]||p.img;
-  document.getElementById('admEditImg').src=imgSrc;
-  document.getElementById('admEditName').value=p.name;
-  document.getElementById('admEditPrice').value=p.price;
-  document.getElementById('admEditCat').value=p.cat;
-  document.getElementById('admBadgeHot').checked=p.badges.includes('hot');
-  document.getElementById('admBadgeSale').checked=p.badges.includes('sale');
-  document.getElementById('admBadgeNew').checked=p.badges.includes('new');
-  document.getElementById('admImgUrl').value='';
-  document.getElementById('admImgFile').value='';
-  // show edit, hide list
+
+  // Cargar galería existente
+  const storedImgs = window.admGalleryStore[id] || [];
+  const mainImg = window.admImgOverrides[id] || p.img;
+  admGalleryImgs = storedImgs.length ? [...storedImgs] : [mainImg];
+
+  // Código del producto — extraer del nombre si tiene el patrón "Cód.: XXXX" o "*op Cód.: XXXX"
+  const codeStored = window.admCodeOverrides[id] || p.sku || '';
+  let codeName = '', cleanName = p.name;
+  if(!codeStored){
+    const m = p.name.match(/\*?op\s+Cód\.?:?\s*([A-Z0-9\-_\.]+)/i) || p.name.match(/Cód\.?:?\s*([A-Z0-9\-_\.]+)/i);
+    if(m){
+      codeName  = m[1];
+      // Limpiar el nombre: quitar " *op Cód.: XXXX" del final
+      cleanName = p.name.replace(/\s*\*?op\s+Cód\.?:?\s*[A-Z0-9\-_\.]+/i, '').replace(/\s+$/, '');
+    }
+  }
+
+  document.getElementById('admEditName').value  = cleanName;
+  document.getElementById('admEditCode').value  = codeStored || codeName;
+  document.getElementById('admEditPrice').value = p.price;
+  document.getElementById('admEditCat').value   = p.cat;
+  document.getElementById('admBadgeHot').checked  = p.badges.includes('hot');
+  document.getElementById('admBadgeSale').checked = p.badges.includes('sale');
+  document.getElementById('admBadgeNew').checked  = p.badges.includes('new');
+  document.getElementById('admImgUrlAdd').value = '';
+  document.getElementById('admImgFileMulti').value = '';
+
+  admRenderGallery();
   document.getElementById('admPanelBody').style.display='none';
   document.getElementById('admEdit').style.display='';
 }
@@ -3756,46 +3903,101 @@ function admOpenEdit(id){
 function admCloseEdit(){
   document.getElementById('admEdit').style.display='none';
   document.getElementById('admPanelBody').style.display='';
+  admGalleryImgs = [];
   admRender();
 }
 
-function admPreviewImg(input){
-  const file=input.files[0];
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    admImgData=e.target.result;
-    document.getElementById('admEditImg').src=admImgData;
-    document.getElementById('admImgUrl').value='';
-  };
-  reader.readAsDataURL(file);
+// ── Galería de imágenes ────────────────────────────────────────────────────
+function admRenderGallery(){
+  const el = document.getElementById('admGallery');
+  el.innerHTML = admGalleryImgs.map((src,i) => `
+    <div class="adm-gallery-thumb" draggable="true"
+      ondragstart="admDragStart(event,${i})" ondragover="admDragOver(event,${i})"
+      ondrop="admDrop(event,${i})" ondragleave="admDragLeave(event)">
+      <img src="${src}" onerror="this.src='https://www.oncepuntos.com.ar/fotos/no_disponible.jpg'"/>
+      <button class="adm-rm-img" onclick="admRemoveImg(${i})" title="Eliminar">✕</button>
+    </div>`).join('') +
+    (admGalleryImgs.length < 10 ? `
+    <div style="width:80px;height:80px;border:2px dashed var(--border2);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text4);font-size:22px;flex-shrink:0;transition:all .2s"
+      onclick="document.getElementById('admImgFileMulti').click()"
+      onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
+      onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text4)'">＋</div>` : '');
 }
 
-function admImgFromUrl(input){
-  const url=input.value.trim();
+let _dragIdx = null;
+function admDragStart(e,i){ _dragIdx=i; e.dataTransfer.effectAllowed='move'; }
+function admDragOver(e,i){ e.preventDefault(); document.querySelectorAll('.adm-gallery-thumb')[i]?.classList.add('drag-over'); }
+function admDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function admDrop(e,i){
+  e.preventDefault();
+  document.querySelectorAll('.adm-gallery-thumb').forEach(el=>el.classList.remove('drag-over'));
+  if(_dragIdx===null || _dragIdx===i) return;
+  const arr=[...admGalleryImgs];
+  const [moved]=arr.splice(_dragIdx,1);
+  arr.splice(i,0,moved);
+  admGalleryImgs=arr;
+  _dragIdx=null;
+  admRenderGallery();
+}
+function admRemoveImg(i){
+  admGalleryImgs.splice(i,1);
+  admRenderGallery();
+}
+function admAddImgsFromFile(input){
+  const files=[...input.files];
+  if(!files.length) return;
+  let loaded=0;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      admGalleryImgs.push(e.target.result);
+      loaded++;
+      if(loaded===files.length) admRenderGallery();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+}
+function admAddImgFromUrl(){
+  const url=document.getElementById('admImgUrlAdd').value.trim();
   if(!url) return;
-  admImgData=url;
-  document.getElementById('admEditImg').src=url;
+  admGalleryImgs.push(url);
+  document.getElementById('admImgUrlAdd').value='';
+  admRenderGallery();
 }
 
 function admSaveEdit(){
   const p=PRODUCTS.find(x=>x.id===admEditId);
   if(!p) return;
-  p.name=document.getElementById('admEditName').value.trim()||p.name;
-  p.price=parseInt(document.getElementById('admEditPrice').value)||p.price;
-  p.old=Math.round(p.price*1.20);
-  p.cat=document.getElementById('admEditCat').value;
-  const badges=[];
-  if(document.getElementById('admBadgeHot').checked) badges.push('hot');
-  if(document.getElementById('admBadgeSale').checked) badges.push('sale');
-  if(document.getElementById('admBadgeNew').checked) badges.push('new');
-  p.badges=badges;
-  if(admImgData){
-    window.admImgOverrides[admEditId]=admImgData;
-    p.img=admImgData;
+
+  p.name  = document.getElementById('admEditName').value.trim()  || p.name;
+  p.price = parseInt(document.getElementById('admEditPrice').value) || p.price;
+  p.old   = Math.round(p.price*1.20);
+  p.cat   = document.getElementById('admEditCat').value;
+
+  // Código separado
+  const code = document.getElementById('admEditCode').value.trim();
+  if(code){
+    window.admCodeOverrides[admEditId] = code;
+    p.sku = code;
   }
+
+  // Badges
+  const badges=[];
+  if(document.getElementById('admBadgeHot').checked)  badges.push('hot');
+  if(document.getElementById('admBadgeSale').checked) badges.push('sale');
+  if(document.getElementById('admBadgeNew').checked)  badges.push('new');
+  p.badges=badges;
+
+  // Galería
+  if(admGalleryImgs.length){
+    window.admGalleryStore[admEditId] = [...admGalleryImgs];
+    p.img    = admGalleryImgs[0];
+    p.images = [...admGalleryImgs];
+    window.admImgOverrides[admEditId] = admGalleryImgs[0];
+  }
+
   admCloseEdit();
-  // Persistir en Firebase si está disponible y configurado
   if(window.fbSaveProduct){
     showToast('💾','Guardando en la nube…');
     window.fbSaveProduct(p).then(finalImg=>{
@@ -3809,6 +4011,10 @@ function admSaveEdit(){
     showToast('✅','Producto actualizado');
   }
 }
+
+// Compatibilidad con código viejo
+function admPreviewImg(input){ admAddImgsFromFile(input); }
+function admImgFromUrl(input){ admGalleryImgs[0]=input.value.trim(); admRenderGallery(); }
 
 function exportCSV(){
   const headers=[
