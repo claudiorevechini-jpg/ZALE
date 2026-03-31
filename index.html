@@ -2561,6 +2561,26 @@ document.getElementById('prodCount').textContent='Top 40 productos — Zale';
 function openShipping(){
   closeCart();
   setTimeout(()=>{
+    // Siempre intentar leer datos del invitado de localStorage como respaldo
+    if (!window._fbUser) {
+      try {
+        const guest = JSON.parse(localStorage.getItem('zale_guest_profile') || 'null');
+        if (guest && guest.nombre) {
+          if (!window._ctaData) window._ctaData = {};
+          const d = window._ctaData;
+          // Solo sobreescribir si los campos están vacíos en _ctaData
+          if (!d.nombre)    d.nombre    = guest.nombre    || '';
+          if (!d.apellido)  d.apellido  = guest.apellido  || '';
+          if (!d.email)     d.email     = guest.email     || '';
+          if (!d.telefono)  d.telefono  = guest.telefono  || '';
+          if (!d.direccion) d.direccion = guest.direccion || '';
+          if (!d.ciudad)    d.ciudad    = guest.ciudad    || '';
+          if (!d.prov)      d.prov      = guest.provincia || '';
+          if (!d.provincia) d.provincia = guest.provincia || '';
+          if (!d.cp)        d.cp        = guest.cp        || '';
+        }
+      } catch(e) {}
+    }
     const d = _ctaData || {};
 
     // Normalizar campos: el panel Firebase usa 'direccion'/'telefono'/'provincia'
@@ -2609,20 +2629,21 @@ function openShipping(){
       if(form) form.style.display = 'block';
     }
 
-    // Datos de contacto (siempre prellenar)
+    // Datos de contacto (siempre prellenar si hay datos disponibles)
     {
       const shName = document.getElementById('shName');
       const fullName = [nombre, apellido].filter(Boolean).join(' ');
-      if(shName && fullName && !shName.value) shName.value = fullName;
+      if(shName && fullName) shName.value = fullName;
     }
     {
       const shPhone = document.getElementById('shPhone');
       const phone   = [celArea, celNum].filter(Boolean).join(' ') || d.telefono || '';
-      if(shPhone && phone && !shPhone.value) shPhone.value = phone;
+      if(shPhone && phone) shPhone.value = phone;
     }
     {
       const shEmailEl = document.getElementById('shEmail');
-      if(shEmailEl && email && !shEmailEl.value) shEmailEl.value = email;
+      const emailVal  = d.email || (window._fbUser ? window._fbUser.email : '');
+      if(shEmailEl && emailVal) shEmailEl.value = emailVal;
     }
 
     document.getElementById('shOv').classList.add('on');
