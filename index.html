@@ -2561,27 +2561,31 @@ document.getElementById('prodCount').textContent='Top 40 productos — Zale';
 function openShipping(){
   closeCart();
   setTimeout(()=>{
-    // Siempre intentar leer datos del invitado de localStorage como respaldo
+    // Para invitados: SIEMPRE leer desde localStorage como fuente de verdad
     if (!window._fbUser) {
       try {
         const guest = JSON.parse(localStorage.getItem('zale_guest_profile') || 'null');
-        if (guest && guest.nombre) {
+        if (guest) {
           if (!window._ctaData) window._ctaData = {};
           const d = window._ctaData;
-          // Solo sobreescribir si los campos están vacíos en _ctaData
-          if (!d.nombre)    d.nombre    = guest.nombre    || '';
-          if (!d.apellido)  d.apellido  = guest.apellido  || '';
-          if (!d.email)     d.email     = guest.email     || '';
-          if (!d.telefono)  d.telefono  = guest.telefono  || '';
-          if (!d.direccion) d.direccion = guest.direccion || '';
-          if (!d.ciudad)    d.ciudad    = guest.ciudad    || '';
-          if (!d.prov)      d.prov      = guest.provincia || '';
-          if (!d.provincia) d.provincia = guest.provincia || '';
-          if (!d.cp)        d.cp        = guest.cp        || '';
+          // localStorage tiene prioridad sobre _ctaData para invitados
+          if (guest.nombre)    d.nombre    = guest.nombre;
+          if (guest.apellido)  d.apellido  = guest.apellido;
+          if (guest.email)     d.email     = guest.email;
+          if (guest.telefono)  d.telefono  = guest.telefono;
+          if (guest.direccion) d.direccion = guest.direccion;
+          if (guest.ciudad)    d.ciudad    = guest.ciudad;
+          if (guest.provincia) { d.prov = guest.provincia; d.provincia = guest.provincia; }
+          if (guest.cp)        d.cp        = guest.cp;
+          if (guest.direccion && !d.calle) {
+            const m = guest.direccion.match(/^(.*?)\s+(\d+\w*)$/);
+            d.calle  = m ? m[1].trim() : guest.direccion;
+            d.numero = m ? m[2].trim() : '';
+          }
         }
-      } catch(e) {}
+      } catch(e) { console.warn('Error leyendo localStorage:', e); }
     }
-    const d = _ctaData || {};
+    const d = window._ctaData || {};
 
     // Normalizar campos: el panel Firebase usa 'direccion'/'telefono'/'provincia'
     // mientras que el checkout original usa 'calle'/'numero'/'celArea'/'celNum'/'prov'
@@ -3663,7 +3667,30 @@ function checkUserAvail(val){
   }
 }
 
-// Toggle editar dirección en panel de envío
+// ── Utilidad de debug para localStorage (usable desde consola del navegador) ──
+window.zaleDebug = {
+  verPerfil: () => {
+    const g = localStorage.getItem('zale_guest_profile');
+    console.log('📦 zale_guest_profile:', g ? JSON.parse(g) : '(vacío)');
+    console.log('📦 _ctaData:', window._ctaData);
+  },
+  limpiarPerfil: () => {
+    localStorage.removeItem('zale_guest_profile');
+    window._ctaData = {};
+    console.log('🗑️ Perfil de invitado eliminado');
+  },
+  cargarEjemplo: () => {
+    const ejemplo = {
+      nombre:'Juan', apellido:'Pérez', email:'juan@example.com',
+      telefono:'11 1234-5678', direccion:'Av. Corrientes 1234',
+      ciudad:'Merlo', provincia:'Buenos Aires', cp:'1722'
+    };
+    localStorage.setItem('zale_guest_profile', JSON.stringify(ejemplo));
+    console.log('✅ Perfil de ejemplo cargado:', ejemplo);
+  }
+};
+console.log('💡 ZALE debug disponible: zaleDebug.verPerfil() | zaleDebug.limpiarPerfil() | zaleDebug.cargarEjemplo()');
+
 function toggleShAddrEdit(){
   const form = document.getElementById('shAddrForm');
   const btn  = document.getElementById('btnModAddr');
