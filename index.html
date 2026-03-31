@@ -733,7 +733,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
   <div class="sni" onclick="goCategory('juguetes')">🧸 Juguetes</div>
   <div class="sni" onclick="goCategory('moda')">👗 Indumentaria</div>
   <div class="sni" onclick="goCategory('gaming')">🎮 Gaming</div>
-  <div class="sni" onclick="goCategory('otros')">📦 Otros</div>
+  <div class="sni" onclick="goCategory('todos')">🗂️ Todos</div>
   <div class="sni" onclick="goCategory('bazar')">🛍️ Bazar</div>
   <div class="sni" onclick="goCategory('mate')">🧉 Mate y Termos</div>
   <div class="sni" onclick="goCategory('ofertas')">🔥 Ofertas</div>
@@ -777,28 +777,149 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
 </div>
 
 <div id="page-cat" class="page">
-  <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));padding:28px 20px;position:relative;overflow:hidden">
+  <!-- Hero banner -->
+  <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));padding:22px 20px 18px;position:relative;overflow:hidden">
     <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:36px 36px"></div>
-    <div style="position:relative;z-index:1">
-      <div id="catTitle" style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:#fff;letter-spacing:1px"></div>
-      <div id="catSub" style="color:rgba(255,255,255,.5);font-size:13px;margin-top:3px"></div>
-    </div>
-  </div>
-  <div class="sec" style="padding-top:4px">
-    <div class="sech">
-      <div class="sect" id="catSectTitle"></div>
-      <div style="display:flex;align-items:center;gap:9px">
-        <select id="catSort" onchange="catSortProds()" style="background:var(--white);border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text);outline:none;cursor:pointer">
-          <option value="rel">Más relevantes</option>
-          <option value="asc">Menor precio</option>
-          <option value="desc">Mayor precio</option>
-        </select>
-        <span id="catCount" style="font-size:12px;color:var(--text3)"></span>
+    <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div id="catTitle" style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#fff;letter-spacing:1px;line-height:1"></div>
+        <div id="catSub" style="color:rgba(255,255,255,.5);font-size:12px;margin-top:3px"></div>
+      </div>
+      <!-- Buscador interno -->
+      <div style="display:flex;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.18);border-radius:9px;overflow:hidden;max-width:320px;flex:1;min-width:180px">
+        <input id="catSearch" type="text" placeholder="Buscar en esta categoría…"
+          style="flex:1;background:none;border:none;outline:none;color:#fff;padding:8px 12px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif"
+          oninput="catApplyAll()" />
+        <button onclick="catApplyAll()" style="background:var(--blue);border:none;padding:0 14px;color:#fff;font-size:13px;cursor:pointer">🔍</button>
       </div>
     </div>
-    <div class="pgrid" id="catProdGrid"></div>
+  </div>
+
+  <!-- Layout: sidebar + productos -->
+  <div style="display:flex;align-items:flex-start;gap:0;padding:0 20px 32px;max-width:1400px;margin:0 auto">
+
+    <!-- ══ SIDEBAR FILTROS ══ -->
+    <aside id="catSidebar" style="width:220px;flex-shrink:0;padding-top:20px;padding-right:18px;position:sticky;top:68px;max-height:calc(100vh - 80px);overflow-y:auto;scrollbar-width:thin">
+
+      <!-- Botón limpiar filtros -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:12px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Filtros</span>
+        <button onclick="catClearFilters()" style="background:none;border:none;font-size:11px;color:var(--blue);cursor:pointer;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif">Limpiar todo</button>
+      </div>
+
+      <!-- Ordenar por -->
+      <div class="cat-filter-section">
+        <div class="cat-filter-title">📊 Ordenar por</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="cat-radio-row"><input type="radio" name="catOrd" value="rel" checked onchange="catApplyAll()"> <span>Más relevantes</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catOrd" value="asc" onchange="catApplyAll()"> <span>Menor precio</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catOrd" value="desc" onchange="catApplyAll()"> <span>Mayor precio</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catOrd" value="rating" onchange="catApplyAll()"> <span>Mejor puntuados</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catOrd" value="disc" onchange="catApplyAll()"> <span>Mayor descuento</span></label>
+        </div>
+      </div>
+
+      <!-- Precio -->
+      <div class="cat-filter-section">
+        <div class="cat-filter-title">💰 Precio</div>
+        <div style="display:flex;flex-direction:column;gap:4px" id="catPriceRanges">
+          <label class="cat-radio-row"><input type="radio" name="catPricio" value="" checked onchange="catApplyAll()"> <span>Cualquier precio</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catPricio" value="0-20000" onchange="catApplyAll()"> <span>Hasta $20.000</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catPricio" value="20000-50000" onchange="catApplyAll()"> <span>$20.000 – $50.000</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catPricio" value="50000-150000" onchange="catApplyAll()"> <span>$50.000 – $150.000</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catPricio" value="150000-999999999" onchange="catApplyAll()"> <span>Más de $150.000</span></label>
+        </div>
+        <!-- Rango personalizado -->
+        <div style="display:flex;gap:5px;margin-top:8px;align-items:center">
+          <input id="catPMin" type="number" placeholder="Mínimo" min="0"
+            style="flex:1;border:1.5px solid var(--border2);border-radius:7px;padding:6px 8px;font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;width:0"
+            oninput="catCustomPrice()" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          <span style="font-size:10px;color:var(--text3)">—</span>
+          <input id="catPMax" type="number" placeholder="Máximo" min="0"
+            style="flex:1;border:1.5px solid var(--border2);border-radius:7px;padding:6px 8px;font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;width:0"
+            oninput="catCustomPrice()" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          <button onclick="catApplyAll()" style="background:var(--blue);border:none;border-radius:7px;padding:6px 9px;color:#fff;font-size:11px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700">IR</button>
+        </div>
+      </div>
+
+      <!-- Envío -->
+      <div class="cat-filter-section">
+        <div class="cat-filter-title">🚚 Envío</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="cat-check-row"><input type="checkbox" id="cfEnvioGratis" onchange="catApplyAll()"> <span>Envío gratis</span></label>
+        </div>
+      </div>
+
+      <!-- Tipo de producto -->
+      <div class="cat-filter-section">
+        <div class="cat-filter-title">🏷️ Destacados</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="cat-check-row"><input type="checkbox" id="cfOferta" onchange="catApplyAll()"> <span>En oferta</span></label>
+          <label class="cat-check-row"><input type="checkbox" id="cfNuevo" onchange="catApplyAll()"> <span>Nuevos ingresos</span></label>
+          <label class="cat-check-row"><input type="checkbox" id="cfHot" onchange="catApplyAll()"> <span>🔥 Más vendidos</span></label>
+        </div>
+      </div>
+
+      <!-- Calificación -->
+      <div class="cat-filter-section">
+        <div class="cat-filter-title">⭐ Calificación</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="cat-radio-row"><input type="radio" name="catRating" value="" checked onchange="catApplyAll()"> <span>Cualquiera</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catRating" value="4.5" onchange="catApplyAll()"> <span>★★★★★ 4.5+</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catRating" value="4" onchange="catApplyAll()"> <span>★★★★☆ 4+</span></label>
+          <label class="cat-radio-row"><input type="radio" name="catRating" value="3" onchange="catApplyAll()"> <span>★★★☆☆ 3+</span></label>
+        </div>
+      </div>
+
+      <!-- Subcategorías (solo cuando estamos en "todos") -->
+      <div class="cat-filter-section" id="cfSubcatSection" style="display:none">
+        <div class="cat-filter-title">📂 Categoría</div>
+        <div style="display:flex;flex-direction:column;gap:4px" id="cfSubcatList"></div>
+      </div>
+
+    </aside>
+
+    <!-- ══ ÁREA PRINCIPAL ══ -->
+    <div style="flex:1;min-width:0;padding-top:20px">
+
+      <!-- Toolbar superior -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <div>
+          <div class="sect" id="catSectTitle" style="font-size:17px"></div>
+          <span id="catCount" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <!-- Chips de filtros activos -->
+        <div id="catActiveChips" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="pgrid" id="catProdGrid"></div>
+
+      <!-- Sin resultados -->
+      <div id="catNoResults" style="display:none;text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="font-size:52px;margin-bottom:12px">😕</div>
+        <div style="font-size:18px;font-weight:900;margin-bottom:8px">Sin resultados</div>
+        <div style="font-size:13px;margin-bottom:16px">Probá con otros filtros o buscá algo diferente</div>
+        <button onclick="catClearFilters()" style="background:var(--blue);border:none;border-radius:9px;padding:11px 24px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Limpiar filtros</button>
+      </div>
+
+    </div>
   </div>
 </div>
+
+<style>
+.cat-filter-section{border-top:1px solid var(--border);padding:14px 0;margin-bottom:0}
+.cat-filter-title{font-size:11px;font-weight:900;color:var(--text);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.cat-radio-row,.cat-check-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);cursor:pointer;padding:3px 0;transition:color .15s;font-family:'Plus Jakarta Sans',sans-serif}
+.cat-radio-row:hover,.cat-check-row:hover{color:var(--blue)}
+.cat-radio-row input,.cat-check-row input{accent-color:var(--blue);cursor:pointer;flex-shrink:0}
+.cat-active-chip{display:inline-flex;align-items:center;gap:5px;background:var(--blue-l);border:1px solid rgba(0,87,255,.25);color:var(--blue);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer}
+.cat-active-chip:hover{background:#cddeff}
+@media(max-width:768px){
+  #catSidebar{display:none}
+  #catSidebarToggle{display:flex!important}
+}
+</style>
 
 <div id="page-search" class="page">
   <div class="sec" style="padding-top:18px">
@@ -2313,33 +2434,212 @@ function goHome(){
   document.querySelector('.sni').classList.add('active');
   showPage('home');
 }
+// ══ CAT PAGE — motor de filtros estilo ML ══════════════════════════════════
+let _catBase = [];      // productos base de la categoría actual
+let _catIsTodos = false; // si estamos en "Todos"
+
 function goCategory(cat){
+  // Activar subnav
   document.querySelectorAll('.sni').forEach(n=>{
     n.classList.remove('active');
-    const t=n.textContent.toLowerCase();
-    if((cat==='electrónica'&&t.includes('electr'))||(cat==='hogar'&&t.includes('hogar'))||(cat==='salud'&&t.includes('salud'))||(cat==='herramientas'&&t.includes('herram'))||(cat==='juguetes'&&t.includes('juguet'))||(cat==='moda'&&t.includes('indumen'))||(cat==='gaming'&&t.includes('gaming'))||(cat==='otros'&&t.includes('otros'))||(cat==='ofertas'&&t.includes('oferta'))||(cat==='deportes'&&t.includes('deport'))||(cat==='bazar'&&t.includes('bazar'))||(cat==='mate'&&t.includes('mate')))
-      n.classList.add('active');
+    const t = n.textContent.toLowerCase();
+    if(
+      (cat==='electrónica'&&t.includes('electr'))||
+      (cat==='hogar'&&t.includes('hogar'))||
+      (cat==='salud'&&t.includes('salud'))||
+      (cat==='herramientas'&&t.includes('herram'))||
+      (cat==='juguetes'&&t.includes('juguet'))||
+      (cat==='moda'&&t.includes('indumen'))||
+      (cat==='gaming'&&t.includes('gaming'))||
+      (cat==='todos'&&t.includes('todos'))||
+      (cat==='otros'&&t.includes('todos'))|| // compatibilidad
+      (cat==='ofertas'&&t.includes('oferta'))||
+      (cat==='deportes'&&t.includes('deport'))||
+      (cat==='bazar'&&t.includes('bazar'))||
+      (cat==='mate'&&t.includes('mate'))
+    ) n.classList.add('active');
   });
-  const ci=CATS.find(c=>c.key===cat);
-  const label=ci?ci.label:cat.charAt(0).toUpperCase()+cat.slice(1);
-  document.getElementById('catTitle').textContent=label.toUpperCase();
-  document.getElementById('catSub').textContent='Encontrá lo que buscás al mejor precio';
-  document.getElementById('catSectTitle').innerHTML='<span>'+label+'</span>';
-  let prods=cat==='ofertas'?PRODUCTS.filter(p=>p.badges.includes('sale')||p.badges.includes('hot')):PRODUCTS.filter(p=>p.cat===cat);
-  if(!prods.length)prods=PRODUCTS;
-  catProds=[...prods];
-  document.getElementById('catCount').textContent=prods.length+' productos';
-  document.getElementById('catSort').value='rel';
-  renderProds(prods,'catProdGrid');
+
+  // Resolver "otros" → "todos"
+  const isTodos = (cat === 'todos' || cat === 'otros');
+  _catIsTodos = isTodos;
+
+  const ci = CATS.find(c => c.key === cat || (isTodos && c.key === 'otros'));
+  const label = isTodos ? 'Todos los productos' : (ci ? ci.label : cat.charAt(0).toUpperCase()+cat.slice(1));
+
+  document.getElementById('catTitle').textContent = isTodos ? 'TODOS' : label.toUpperCase();
+  document.getElementById('catSub').textContent = isTodos
+    ? 'Explorá todos nuestros productos con filtros avanzados'
+    : 'Encontrá lo que buscás al mejor precio';
+  document.getElementById('catSectTitle').innerHTML = '<span>' + label + '</span>';
+
+  // Base de productos
+  if(isTodos){
+    _catBase = [...PRODUCTS];
+  } else if(cat === 'ofertas'){
+    _catBase = PRODUCTS.filter(p => p.badges.includes('sale') || p.badges.includes('hot'));
+  } else {
+    _catBase = PRODUCTS.filter(p => p.cat === cat);
+    if(!_catBase.length) _catBase = [...PRODUCTS];
+  }
+
+  // Subcategorías (solo en "Todos")
+  const subcatSec = document.getElementById('cfSubcatSection');
+  const subcatList = document.getElementById('cfSubcatList');
+  if(isTodos && subcatList){
+    const cats = [...new Set(PRODUCTS.map(p => p.cat))].sort();
+    const catLabels = {
+      electrónica:'📱 Electrónica', hogar:'🏠 Hogar', salud:'💊 Salud', herramientas:'🔧 Herramientas',
+      juguetes:'🧸 Juguetes', moda:'👗 Indumentaria', gaming:'🎮 Gaming', bazar:'🛍️ Bazar',
+      mate:'🧉 Mate/Termos', otros:'📦 Varios', deportes:'⚽ Deportes'
+    };
+    subcatList.innerHTML = `<label class="cat-radio-row"><input type="radio" name="catSubcat" value="" checked onchange="catApplyAll()"> <span>Todas las categorías</span></label>` +
+      cats.map(c => `<label class="cat-radio-row"><input type="radio" name="catSubcat" value="${c}" onchange="catApplyAll()"> <span>${catLabels[c]||c}</span></label>`).join('');
+    subcatSec.style.display = '';
+  } else {
+    if(subcatSec) subcatSec.style.display = 'none';
+  }
+
+  // Limpiar filtros y renderizar
+  catClearFilters(false);
+  catApplyAll();
   showPage('cat');
 }
-function catSortProds(){
-  const v=document.getElementById('catSort').value;
-  let list=[...catProds];
-  if(v==='asc')list.sort((a,b)=>a.price-b.price);
-  else if(v==='desc')list.sort((a,b)=>b.price-a.price);
-  renderProds(list,'catProdGrid');
+
+// Limpiar todos los controles de filtro
+function catClearFilters(rerender = true){
+  document.getElementById('catSearch').value = '';
+  // Ordenar
+  const ord = document.querySelector('input[name="catOrd"][value="rel"]');
+  if(ord) ord.checked = true;
+  // Precio
+  const pAny = document.querySelector('input[name="catPricio"][value=""]');
+  if(pAny) pAny.checked = true;
+  document.getElementById('catPMin').value = '';
+  document.getElementById('catPMax').value = '';
+  // Envío / badges
+  ['cfEnvioGratis','cfOferta','cfNuevo','cfHot'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.checked = false;
+  });
+  // Rating
+  const rAny = document.querySelector('input[name="catRating"][value=""]');
+  if(rAny) rAny.checked = true;
+  // Subcats
+  const scAny = document.querySelector('input[name="catSubcat"][value=""]');
+  if(scAny) scAny.checked = true;
+  if(rerender) catApplyAll();
 }
+
+// Precio personalizado: desmarcar radios al escribir
+function catCustomPrice(){
+  const pAny = document.querySelector('input[name="catPricio"][value=""]');
+  if(pAny) pAny.checked = true;
+}
+
+// Motor principal — aplica todos los filtros y re-renderiza
+function catApplyAll(){
+  let list = [..._catBase];
+  const chips = [];
+
+  // Búsqueda de texto
+  const q = (document.getElementById('catSearch').value || '').trim().toLowerCase();
+  if(q){
+    list = list.filter(p => p.name.toLowerCase().includes(q) || (p.seller||'').toLowerCase().includes(q));
+    chips.push({label: `🔍 "${q}"`, clear: ()=>{ document.getElementById('catSearch').value=''; catApplyAll(); }});
+  }
+
+  // Subcategoría (solo "Todos")
+  if(_catIsTodos){
+    const sc = document.querySelector('input[name="catSubcat"]:checked');
+    if(sc && sc.value){
+      list = list.filter(p => p.cat === sc.value);
+      chips.push({label: `📂 ${sc.value}`, clear: ()=>{ document.querySelector('input[name="catSubcat"][value=""]').checked=true; catApplyAll(); }});
+    }
+  }
+
+  // Precio por radio
+  const prRange = document.querySelector('input[name="catPricio"]:checked');
+  const prMin = parseFloat(document.getElementById('catPMin').value) || 0;
+  const prMax = parseFloat(document.getElementById('catPMax').value) || Infinity;
+
+  if(prMin > 0 || prMax < Infinity){
+    list = list.filter(p => p.price >= prMin && p.price <= prMax);
+    chips.push({label:`💰 $${prMin.toLocaleString('es-AR')} – $${prMax===Infinity?'∞':prMax.toLocaleString('es-AR')}`, clear:()=>{ document.getElementById('catPMin').value=''; document.getElementById('catPMax').value=''; catApplyAll(); }});
+  } else if(prRange && prRange.value){
+    const [lo, hi] = prRange.value.split('-').map(Number);
+    list = list.filter(p => p.price >= lo && p.price <= hi);
+    const labels = {'0-20000':'Hasta $20.000','20000-50000':'$20k–$50k','50000-150000':'$50k–$150k','150000-999999999':'+$150k'};
+    chips.push({label:`💰 ${labels[prRange.value]||prRange.value}`, clear:()=>{ document.querySelector('input[name="catPricio"][value=""]').checked=true; catApplyAll(); }});
+  }
+
+  // Envío gratis
+  if(document.getElementById('cfEnvioGratis').checked){
+    list = list.filter(p => p.price >= 20000);
+    chips.push({label:'🚚 Envío gratis', clear:()=>{ document.getElementById('cfEnvioGratis').checked=false; catApplyAll(); }});
+  }
+
+  // Badges
+  if(document.getElementById('cfOferta').checked){
+    list = list.filter(p => p.badges.includes('sale'));
+    chips.push({label:'🏷️ En oferta', clear:()=>{ document.getElementById('cfOferta').checked=false; catApplyAll(); }});
+  }
+  if(document.getElementById('cfNuevo').checked){
+    list = list.filter(p => p.badges.includes('new'));
+    chips.push({label:'🆕 Nuevos', clear:()=>{ document.getElementById('cfNuevo').checked=false; catApplyAll(); }});
+  }
+  if(document.getElementById('cfHot').checked){
+    list = list.filter(p => p.badges.includes('hot'));
+    chips.push({label:'🔥 Más vendidos', clear:()=>{ document.getElementById('cfHot').checked=false; catApplyAll(); }});
+  }
+
+  // Rating
+  const rMin = document.querySelector('input[name="catRating"]:checked');
+  if(rMin && rMin.value){
+    list = list.filter(p => p.rating >= parseFloat(rMin.value));
+    chips.push({label:`⭐ ${rMin.value}+`, clear:()=>{ document.querySelector('input[name="catRating"][value=""]').checked=true; catApplyAll(); }});
+  }
+
+  // Ordenar
+  const ord = document.querySelector('input[name="catOrd"]:checked');
+  if(ord){
+    if(ord.value === 'asc')    list.sort((a,b) => a.price - b.price);
+    else if(ord.value === 'desc') list.sort((a,b) => b.price - a.price);
+    else if(ord.value === 'rating') list.sort((a,b) => b.rating - a.rating);
+    else if(ord.value === 'disc')   list.sort((a,b) => b.disc - a.disc);
+  }
+
+  // Actualizar chips de filtros activos
+  const chipsEl = document.getElementById('catActiveChips');
+  if(chips.length){
+    chipsEl.innerHTML = chips.map((c,i) =>
+      `<span class="cat-active-chip" onclick="_catChipClear(${i})">✕ ${c.label}</span>`
+    ).join('');
+    window._catChips = chips;
+  } else {
+    chipsEl.innerHTML = '';
+    window._catChips = [];
+  }
+
+  // Mostrar/ocultar resultados
+  document.getElementById('catCount').textContent = list.length + ' producto' + (list.length!==1?'s':'');
+  const noRes = document.getElementById('catNoResults');
+  const grid  = document.getElementById('catProdGrid');
+  if(!list.length){
+    grid.innerHTML = '';
+    noRes.style.display = '';
+  } else {
+    noRes.style.display = 'none';
+    renderProds(list, 'catProdGrid');
+  }
+}
+
+window._catChipClear = function(i){
+  if(window._catChips && window._catChips[i]) window._catChips[i].clear();
+};
+
+// Compatibilidad: catSortProds ya no hace nada (reemplazado por catApplyAll)
+function catSortProds(){ catApplyAll(); }
 function doSearch(){
   const q=document.getElementById('srchIn').value.trim().toLowerCase();
   const cat=document.getElementById('srchCat').value;
