@@ -3601,6 +3601,10 @@ function sendTransfWhatsapp(){
           <option value="">Todas las categorías</option>
         </select>
         <button onclick="exportCSV()" style="background:var(--green);border:none;border-radius:8px;padding:8px 13px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif">📥 Exportar CSV</button>
+        <label style="background:var(--blue);border:none;border-radius:8px;padding:8px 13px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px">
+          📤 Importar CSV
+          <input type="file" id="admImportFile" accept=".csv,text/csv" style="display:none" onchange="importCSV(this)"/>
+        </label>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:8px" id="admCount"></div>
       <!-- product list -->
@@ -3841,6 +3845,105 @@ function exportCSV(){
   a.download='productos_zale.csv';
   a.click();
   showToast('📥','CSV con '+PRODUCTS.length+' productos descargado');
+}
+
+function importCSV(input){
+  const file=input.files[0];
+  if(!file){return;}
+  input.value=''; // reset so same file can be re-imported
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const text=e.target.result.replace(/^\uFEFF/,''); // strip BOM
+      const lines=text.split(/\r?\n/).filter(l=>l.trim());
+      if(lines.length<2){showToast('⚠️','El CSV está vacío o no tiene datos');return;}
+
+      // Parse a single CSV row respecting quoted fields (separator ; or ,)
+      function parseRow(line){
+        const sep=line.includes(';')?';':',';
+        const result=[];
+        let cur='',inQ=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch==='"'){
+            if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+            else{inQ=!inQ;}
+          } else if(ch===sep&&!inQ){
+            result.push(cur.trim());cur='';
+          } else {cur+=ch;}
+        }
+        result.push(cur.trim());
+        return result;
+      }
+
+      const headers=parseRow(lines[0]);
+      function colIdx(candidates){
+        for(let hi=0;hi<headers.length;hi++){
+          for(const c of candidates){
+            if(headers[hi].toLowerCase().includes(c.toLowerCase())) return hi;
+          }
+        }
+        return -1;
+      }
+      const iNombre = colIdx(['nombre','name']);
+      const iCat    = colIdx(['categor']);
+      const iPrecio = colIdx(['precio','price']);
+      const iBadge  = colIdx(['badge','tag']);
+
+      if(iNombre<0||iPrecio<0){
+        showToast('⚠️','CSV inválido: necesita columnas Nombre y Precio');
+        return;
+      }
+
+      let updated=0,added=0,skipped=0;
+      for(let li=1;li<lines.length;li++){
+        if(!lines[li].trim()) continue;
+        const cols=parseRow(lines[li]);
+        const nombre=(cols[iNombre]||'').trim();
+        const precioRaw=(cols[iPrecio]||'').replace(',','.');
+        const precio=parseFloat(precioRaw);
+        if(!nombre||isNaN(precio)||precio<=0){skipped++;continue;}
+        const cat=iCat>=0?(cols[iCat]||'').trim().toLowerCase()||'otros':'otros';
+        let badges=[];
+        if(iBadge>=0){
+          const ts=(cols[iBadge]||'').toLowerCase();
+          if(ts.includes('hot')) badges.push('hot');
+          if(ts.includes('sale')) badges.push('sale');
+          if(ts.includes('new')||ts.includes('nuevo')) badges.push('new');
+        }
+        const existing=PRODUCTS.find(p=>p.name.toLowerCase()===nombre.toLowerCase());
+        if(existing){
+          existing.name=nombre;
+          existing.price=Math.round(precio);
+          existing.old=Math.round(precio*1.20);
+          if(iCat>=0&&cat) existing.cat=cat;
+          if(iBadge>=0) existing.badges=badges;
+          updated++;
+        } else {
+          PRODUCTS.push({
+            id:Date.now()+Math.floor(Math.random()*9999),
+            name:nombre,price:Math.round(precio),old:Math.round(precio*1.20),
+            cat:cat||'otros',
+            img:'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg',
+            badges:badges,seller:'Zale',stars:4.5,reviews:10,
+            inst:'3 cuotas sin interés'
+          });
+          added++;
+        }
+      }
+      admInit();
+      if(typeof renderProducts==='function') renderProducts();
+      const msg=(updated?updated+' actualiz.':'')+
+                (updated&&added?' · ':'')+
+                (added?added+' nuevos':'')+
+                ((updated||added)&&skipped?' · ':'')+
+                (skipped?skipped+' omitidos':'');
+      showToast('✅','Importado: '+msg);
+    } catch(err){
+      showToast('⚠️','Error al leer el CSV: '+err.message);
+    }
+  };
+  reader.readAsText(file,'utf-8');
 }
 
 /* ============================================================
