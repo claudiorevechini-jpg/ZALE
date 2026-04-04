@@ -1454,10 +1454,13 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:40px 20px 18px;
 
 <script>
 const B='https://www.oncepuntos.com.ar/fotos/';
+// ── Margen OncePuntos (guardado en localStorage) ──────────────────────────
+window._opMarginMult = parseFloat(localStorage.getItem('opMarginMult') || '1.30');
 const P=(id,name,mayo,cat,cod,badges=[])=>{
-  const price=Math.round(mayo*1.30),old=Math.round(price*1.20),disc=17;
+  const mult=window._opMarginMult||1.30;
+  const price=Math.round(mayo*mult),old=Math.round(price*1.20),disc=Math.round((1-1/mult)*100)||17;
   const ship=price>=20000?'Envío gratis':'Envío gratis en compras +$20.000';
-  return{id,name,img:cod.startsWith('http')?cod:B+cod+'.jpg',price,old,disc,seller:'Zale',rating:(()=>{const r=[3.8,4.0,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5.0,4.3,4.5,4.7,4.6,4.4,4.2,4.8,4.9];return r[id%r.length];})(),reviews:(()=>{const s=[23,47,89,134,256,412,578,31,763,199,88,341,512,67,921,444,18,302,647,155];return s[id%s.length]+(id*7%113);})(),cat,badges,ship,stock:'En stock'};
+  return{id,name,img:cod.startsWith('http')?cod:B+cod+'.jpg',price,old,disc,seller:'Zale',mayo,cod,rating:(()=>{const r=[3.8,4.0,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5.0,4.3,4.5,4.7,4.6,4.4,4.2,4.8,4.9];return r[id%r.length];})(),reviews:(()=>{const s=[23,47,89,134,256,412,578,31,763,199,88,341,512,67,921,444,18,302,647,155];return s[id%s.length]+(id*7%113);})(),cat,badges,ship,stock:'En stock'};
 };
 const PRODUCTS=[
 P(1,'Aspiradora Inalámbrica 2 en 1 Batería',76690,'electrónica','AV5731',['hot']),
@@ -3600,15 +3603,74 @@ function sendTransfWhatsapp(){
         <select id="admCatFilter" onchange="admRender()" style="border:1.5px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;background:#fff;color:var(--text)">
           <option value="">Todas las categorías</option>
         </select>
-        <button onclick="exportCSV()" style="background:var(--green);border:none;border-radius:8px;padding:8px 13px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif">📥 Exportar CSV</button>
-        <label style="background:var(--blue);border:none;border-radius:8px;padding:8px 13px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px">
-          📤 Importar CSV
-          <input type="file" id="admImportFile" accept=".csv,text/csv" style="display:none" onchange="importCSV(this)"/>
-        </label>
+        <!-- EXPORT GROUP -->
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:800;color:var(--text3);white-space:nowrap">Exportar:</span>
+          <button onclick="exportTiendaNubeCSV()" title="Exportar en formato Tienda Nube (.csv con separador ;)" style="background:var(--green);border:none;border-radius:8px;padding:8px 11px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px">
+            📥 <img src="https://www.tiendanube.com/favicon.ico" onerror="this.style.display='none'" style="width:13px;height:13px;border-radius:2px"> TiendaNube
+          </button>
+          <button onclick="exportShopifyCSV()" title="Exportar en formato Shopify (.csv con separador ,)" style="background:#96bf48;border:none;border-radius:8px;padding:8px 11px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px">
+            📥 <img src="https://cdn.shopify.com/shopifycloud/web/assets/v1/favicon.ico" onerror="this.style.display='none'" style="width:13px;height:13px;border-radius:2px"> Shopify
+          </button>
+        </div>
+        <!-- SELECTION BAR -->
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <span id="admSelCount" style="font-size:10px;font-weight:800;color:var(--text3);white-space:nowrap">0 seleccionados</span>
+          <button onclick="admSelectAll()" style="background:var(--bg);border:1.5px solid var(--border2);border-radius:7px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;color:var(--text2);font-family:'Plus Jakarta Sans',sans-serif">☑️ Todos</button>
+          <button onclick="admSelectNone()" style="background:var(--bg);border:1.5px solid var(--border2);border-radius:7px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;color:var(--text2);font-family:'Plus Jakarta Sans',sans-serif">⬜ Ninguno</button>
+          <button onclick="admSelectFiltered()" style="background:var(--bg);border:1.5px solid var(--border2);border-radius:7px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;color:var(--text2);font-family:'Plus Jakarta Sans',sans-serif">🔍 Filtrados</button>
+        </div>
+        <!-- IMPORT GROUP -->
+        <div style="display:flex;gap:5px;align-items:center">
+          <span style="font-size:10px;font-weight:800;color:var(--text3);white-space:nowrap">Importar:</span>
+          <label title="Importar CSV de Tienda Nube (separador ; columnas en español)" style="background:var(--blue);border:none;border-radius:8px;padding:8px 11px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px">
+            📤 <img src="https://www.tiendanube.com/favicon.ico" onerror="this.style.display='none'" style="width:13px;height:13px;border-radius:2px"> TiendaNube
+            <input type="file" id="admImportFileTN" accept=".csv,text/csv" style="display:none" onchange="importTiendaNubeCSV(this)"/>
+          </label>
+          <label title="Importar CSV de Shopify (separador , columnas en inglés: Title, Price, SKU…)" style="background:#5c6ac4;border:none;border-radius:8px;padding:8px 11px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px">
+            📤 <img src="https://cdn.shopify.com/shopifycloud/web/assets/v1/favicon.ico" onerror="this.style.display='none'" style="width:13px;height:13px;border-radius:2px"> Shopify
+            <input type="file" id="admImportFileShopify" accept=".csv,text/csv" style="display:none" onchange="importShopifyCSV(this)"/>
+          </label>
+        </div>
       </div>
+      <!-- ONCEPUNTOS INTEGRATION BAR -->
+      <div style="display:flex;gap:8px;align-items:center;padding:10px 12px;background:linear-gradient(135deg,#fff8f0,#fff3e5);border:1.5px solid #ffd0a0;border-radius:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:900;color:#c85000;white-space:nowrap;display:flex;align-items:center;gap:5px">
+          <img src="https://www.oncepuntos.com.ar/favicon.ico" onerror="this.style.display='none'" style="width:14px;height:14px;border-radius:3px">OncePuntos
+        </div>
+        <button onclick="syncOncePuntos()" id="btnSyncOP" title="Descarga el catalogo actualizado de OncePuntos y agrega/actualiza productos" style="background:#e84800;border:none;border-radius:8px;padding:8px 13px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px;white-space:nowrap">
+          Actualizar catalogo
+        </button>
+        <button onclick="openMarginPanel()" title="Modifica el porcentaje de ganancia sobre el precio mayorista" style="background:#ff6200;border:none;border-radius:8px;padding:8px 13px;color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;display:inline-flex;align-items:center;gap:5px;white-space:nowrap">
+          Ajustar Margen %
+        </button>
+        <span id="opMarginBadge" style="font-size:11px;font-weight:800;background:#fff;border:1.5px solid #ffd0a0;color:#c85000;border-radius:999px;padding:3px 10px;white-space:nowrap"></span>
+        <span id="opSyncStatus" style="font-size:10px;color:var(--text3);flex:1"></span>
+      </div>
+
+      <!-- MARGIN PANEL (inline, hidden by default) -->
+      <div id="opMarginPanel" style="display:none;background:var(--bg);border:1.5px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:900;margin-bottom:10px">Ajustar Margen sobre Precio Mayorista OncePuntos</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+          El precio de venta = Precio Mayorista x (1 + Margen %). Margen actual: <strong id="opCurrentMarginLabel"></strong>.
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:11px;font-weight:800;color:var(--text2)">Nuevo margen (%):</label>
+          <input id="opMarginInput" type="number" min="0" max="500" step="1" placeholder="Ej: 30"
+            style="width:80px;border:1.5px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:14px;font-weight:900;font-family:'Plus Jakarta Sans',sans-serif;outline:none;color:var(--text)"
+            oninput="document.getElementById('opMarginPreview').textContent=(1+(parseFloat(this.value)||0)/100).toFixed(2)+'x'"
+            onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border2)'"/>
+          <span style="font-size:12px;color:var(--text3)">Precio = Mayorista x <span id="opMarginPreview" style="font-weight:900;color:var(--blue)"></span></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button onclick="applyOncePuntosMargin()" style="background:var(--blue);border:none;border-radius:8px;padding:9px 20px;color:#fff;font-size:12px;font-weight:900;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Aplicar a todos</button>
+          <button onclick="document.getElementById('opMarginPanel').style.display='none'" style="background:var(--bg);border:1.5px solid var(--border2);border-radius:8px;padding:9px 16px;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Cancelar</button>
+        </div>
+      </div>
+
       <div style="font-size:11px;color:var(--text3);margin-bottom:8px" id="admCount"></div>
       <!-- product list -->
-      <div id="admList" style="max-height:58vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+      <div id="admList" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
     </div>
 
     <!-- EDIT MODAL inside admin -->
@@ -3711,6 +3773,44 @@ function admInit(){
   const cats=[...new Set(PRODUCTS.map(p=>p.cat))].sort();
   const sel=document.getElementById('admCatFilter');
   sel.innerHTML='<option value="">Todas las categorías</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  _opRefreshBadge();
+  admRender();
+}
+
+// Track selected product IDs for export
+window._admSelectedIds = window._admSelectedIds || new Set();
+
+function _admUpdateSelCount(){
+  const n = window._admSelectedIds.size;
+  const el = document.getElementById('admSelCount');
+  if(el) el.textContent = n===0 ? 'Sin selección (se exportarán todos)' : n+' seleccionado'+(n===1?'':'s');
+}
+
+function admToggleSel(id,checked){
+  if(checked) window._admSelectedIds.add(id);
+  else window._admSelectedIds.delete(id);
+  _admUpdateSelCount();
+  // update row highlight
+  const row=document.getElementById('admRow_'+id);
+  if(row) row.style.borderColor=checked?'var(--blue)':'var(--border)';
+}
+
+function admSelectAll(){
+  PRODUCTS.forEach(p=>window._admSelectedIds.add(p.id));
+  admRender();
+}
+function admSelectNone(){
+  window._admSelectedIds.clear();
+  admRender();
+}
+function admSelectFiltered(){
+  const q=(document.getElementById('admSearch').value||'').toLowerCase();
+  const cat=document.getElementById('admCatFilter').value;
+  PRODUCTS.filter(p=>{
+    const matchQ=!q||p.name.toLowerCase().includes(q);
+    const matchC=!cat||p.cat===cat;
+    return matchQ&&matchC;
+  }).forEach(p=>window._admSelectedIds.add(p.id));
   admRender();
 }
 
@@ -3726,7 +3826,9 @@ function admRender(){
   document.getElementById('admList').innerHTML=list.map(p=>{
     const imgSrc=window.admImgOverrides[p.id]||p.img;
     const badgeHtml=p.badges.map(b=>({hot:'🔥',sale:'🏷️',new:'🆕'}[b]||b)).join(' ');
-    return `<div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px">
+    const isSel=window._admSelectedIds.has(p.id);
+    return `<div id="admRow_${p.id}" style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid ${isSel?'var(--blue)':'var(--border)'};border-radius:10px;padding:8px 10px;transition:border-color .15s">
+      <input type="checkbox" ${isSel?'checked':''} onchange="admToggleSel(${p.id},this.checked)" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:var(--blue)" title="Seleccionar para exportar"/>
       <img src="${imgSrc}" onerror="this.src='https://www.oncepuntos.com.ar/fotos/no_disponible.jpg'" style="width:48px;height:48px;object-fit:contain;background:#fff;border-radius:7px;flex-shrink:0;padding:2px;border:1px solid var(--border)"/>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
@@ -3735,6 +3837,7 @@ function admRender(){
       <button onclick="admOpenEdit(${p.id})" style="background:var(--blue-l);border:1.5px solid var(--blue);border-radius:8px;padding:6px 12px;color:var(--blue);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;flex-shrink:0">✏️ Editar</button>
     </div>`;
   }).join('');
+  _admUpdateSelCount();
 }
 
 function admOpenEdit(id){
@@ -3814,7 +3917,389 @@ function admSaveEdit(){
   }
 }
 
-function exportCSV(){
+// ─── ONCEPUNTOS: BADGE DE MARGEN ──────────────────────────────────────────────
+function _opRefreshBadge(){
+  const pct=Math.round((window._opMarginMult-1)*100);
+  const b=document.getElementById('opMarginBadge');
+  if(b) b.textContent='Margen: +'+pct+'%';
+}
+_opRefreshBadge(); // llamar al inicio
+
+// ─── ONCEPUNTOS: ABRIR PANEL DE MARGEN ────────────────────────────────────────
+function openMarginPanel(){
+  const pct=Math.round((window._opMarginMult-1)*100);
+  const panel=document.getElementById('opMarginPanel');
+  document.getElementById('opCurrentMarginLabel').textContent='+'+pct+'% (x'+window._opMarginMult.toFixed(2)+')';
+  document.getElementById('opMarginInput').value=pct;
+  document.getElementById('opMarginPreview').textContent=window._opMarginMult.toFixed(2)+'x';
+  panel.style.display=panel.style.display==='none'?'':'none';
+}
+
+// ─── ONCEPUNTOS: APLICAR NUEVO MARGEN ─────────────────────────────────────────
+function applyOncePuntosMargin(){
+  const raw=parseFloat(document.getElementById('opMarginInput').value);
+  if(isNaN(raw)||raw<0||raw>500){showToast('⚠️','Ingresá un porcentaje entre 0 y 500');return;}
+  const mult=1+(raw/100);
+  window._opMarginMult=mult;
+  localStorage.setItem('opMarginMult',mult.toString());
+
+  let count=0;
+  PRODUCTS.forEach(p=>{
+    if(p.mayo!==undefined){ // solo productos con precio mayorista guardado
+      p.price=Math.round(p.mayo*mult);
+      p.old=Math.round(p.price*1.20);
+      p.disc=Math.round((1-1/mult)*100)||17;
+      p.ship=p.price>=20000?'Envío gratis':'Envío gratis en compras +$20.000';
+      count++;
+    }
+  });
+
+  _opRefreshBadge();
+  document.getElementById('opMarginPanel').style.display='none';
+  showToast('✅','+'+raw+'% aplicado a '+count+' productos');
+  admRender();
+
+  // Re-renderizar la tienda si está visible
+  const TOP40=PRODUCTS.slice().sort((a,b)=>b.price-a.price).slice(0,40);
+  if(window.renderProds) renderProds(TOP40,'prodGrid');
+}
+
+// ─── ONCEPUNTOS: SYNC CATÁLOGO ────────────────────────────────────────────────
+async function syncOncePuntos(){
+  const btn=document.getElementById('btnSyncOP');
+  const status=document.getElementById('opSyncStatus');
+  if(!btn||!status) return;
+
+  btn.disabled=true;
+  btn.textContent='⏳ Descargando...';
+  status.textContent='Conectando con OncePuntos...';
+
+  // Usamos allorigins.win como proxy CORS
+  const targetUrl='https://www.oncepuntos.com.ar/catalogo2021.php';
+  const proxyUrl='https://api.allorigins.win/get?url='+encodeURIComponent(targetUrl);
+
+  try{
+    const resp=await fetch(proxyUrl);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const json=await resp.json();
+    const html=json.contents||'';
+    if(!html) throw new Error('Respuesta vacía del proxy');
+
+    status.textContent='Parseando productos...';
+    const result=_parseOncePuntosHTML(html);
+
+    if(result.length===0){
+      status.textContent='No se encontraron productos en el HTML.';
+      showToast('⚠️','No se pudieron parsear productos');
+      return;
+    }
+
+    const {added,updated}=_mergeOncePuntosProducts(result);
+    status.textContent='Listo: '+added+' nuevos, '+updated+' actualizados';
+    showToast('✅',added+' nuevos · '+updated+' actualizados de OncePuntos');
+    admRender();
+    const TOP40=PRODUCTS.slice().sort((a,b)=>b.price-a.price).slice(0,40);
+    if(window.renderProds) renderProds(TOP40,'prodGrid');
+  }catch(e){
+    console.error('OncePuntos sync error:',e);
+    // Si el proxy falla, intentar con otro proxy
+    status.textContent='Reintentando con proxy alternativo...';
+    try{
+      const alt='https://corsproxy.io/?url='+encodeURIComponent(targetUrl);
+      const resp2=await fetch(alt);
+      const html2=await resp2.text();
+      const result2=_parseOncePuntosHTML(html2);
+      if(result2.length>0){
+        const {added,updated}=_mergeOncePuntosProducts(result2);
+        status.textContent='Listo: '+added+' nuevos, '+updated+' actualizados';
+        showToast('✅',added+' nuevos · '+updated+' actualizados de OncePuntos');
+        admRender();
+      } else {
+        status.textContent='No se pudo obtener el catálogo. Revisá conexión.';
+        showToast('⚠️','No se pudo conectar con OncePuntos');
+      }
+    }catch(e2){
+      status.textContent='Error: '+e2.message+'. Intentá manualmente.';
+      showToast('⚠️','Error al conectar con OncePuntos');
+    }
+  } finally {
+    btn.disabled=false;
+    btn.textContent='Actualizar catalogo';
+  }
+}
+
+// ─── ONCEPUNTOS: PARSEAR HTML DEL CATÁLOGO ────────────────────────────────────
+// Esta función intenta extraer productos del HTML de oncepuntos.com.ar.
+// Los productos pueden estar en varias estructuras (tabla, divs, etc.)
+function _parseOncePuntosHTML(html){
+  const products=[];
+  const seen=new Set();
+
+  // Intento 1: buscar patrones comunes en catálogos PHP argentinos
+  // Patrón: nombre, código, precio en texto o atributos
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(html,'text/html');
+
+  // Buscar tablas con datos de productos
+  const rows=doc.querySelectorAll('tr');
+  rows.forEach(tr=>{
+    const cells=[...tr.querySelectorAll('td')];
+    if(cells.length<2) return;
+    const txt=cells.map(c=>c.textContent.trim());
+    // buscar columna con precio (número con puntos/comas)
+    const priceIdx=txt.findIndex(t=>/^\$?\s*[\d.,]+$/.test(t.replace(/\s/g,'')));
+    const nameIdx=txt.findIndex(t=>t.length>5&&t.length<150&&priceIdx>=0&&txt.indexOf(t)!==priceIdx);
+    if(priceIdx<0||nameIdx<0) return;
+    const rawPrice=txt[priceIdx].replace(/[$.]/g,'').replace(',','.');
+    const price=parseFloat(rawPrice);
+    if(!price||price<10) return;
+    const name=txt[nameIdx];
+    if(seen.has(name)) return;
+    seen.add(name);
+    // buscar código en la fila (típicamente en un img src o dato específico)
+    let cod='';
+    const imgs=tr.querySelectorAll('img');
+    if(imgs.length){
+      const src=imgs[0].getAttribute('src')||'';
+      const m=src.match(/\/fotos\/(.+?)\./i);
+      if(m) cod=m[1];
+    }
+    if(!cod){
+      // buscar en texto de la fila patrones como "Cód.: XXXX"
+      const fullText=tr.textContent;
+      const cm=fullText.match(/[Cc][oó][d]\.?\s*:?\s*([A-Z0-9\-_]{2,20})/);
+      if(cm) cod=cm[1];
+    }
+    products.push({name,mayo:price,cod:cod||_slugCode(name)});
+  });
+
+  // Intento 2: buscar divs con clase típica de productos
+  if(products.length<5){
+    const cards=doc.querySelectorAll('[class*="product"],[class*="item"],[class*="art"],[class*="prod"]');
+    cards.forEach(card=>{
+      const nameEl=card.querySelector('h2,h3,h4,[class*="name"],[class*="title"],[class*="nombre"]');
+      const priceEl=card.querySelector('[class*="price"],[class*="precio"],[class*="costo"]');
+      const imgEl=card.querySelector('img');
+      if(!nameEl||!priceEl) return;
+      const name=nameEl.textContent.trim();
+      const rawPrice=priceEl.textContent.replace(/[$.]/g,'').replace(',','.').replace(/\s/g,'');
+      const price=parseFloat(rawPrice);
+      if(!price||price<10||!name||name.length<3) return;
+      if(seen.has(name)) return;
+      seen.add(name);
+      let cod='';
+      if(imgEl){
+        const src=imgEl.getAttribute('src')||imgEl.getAttribute('data-src')||'';
+        const m=src.match(/\/fotos\/(.+?)\./i);
+        if(m) cod=m[1];
+      }
+      products.push({name,mayo:price,cod:cod||_slugCode(name)});
+    });
+  }
+
+  // Intento 3: buscar spans/divs con texto de precio (patrón "$12.345")
+  if(products.length<5){
+    const allEls=doc.querySelectorAll('*');
+    allEls.forEach(el=>{
+      if(el.children.length>3) return; // nodo contenedor, saltear
+      const t=el.textContent.trim();
+      // precio argentino: $12.345 o 12345
+      if(/^\$\s*[\d]{1,3}(\.\d{3})*$/.test(t)){
+        const price=parseInt(t.replace(/[$.]/g,''));
+        if(!price||price<100) return;
+        // buscar nombre en elemento hermano o padre
+        let name='';
+        const parent=el.parentElement;
+        if(parent){
+          const sibs=[...parent.children].filter(c=>c!==el);
+          for(const s of sibs){
+            const st=s.textContent.trim();
+            if(st.length>5&&st.length<120&&!/^\$/.test(st)){name=st;break;}
+          }
+        }
+        if(!name||seen.has(name)) return;
+        seen.add(name);
+        let cod='';
+        const imgNear=el.closest('[class]')?.querySelector('img');
+        if(imgNear){
+          const src=imgNear.getAttribute('src')||'';
+          const m=src.match(/\/fotos\/(.+?)\./i);
+          if(m) cod=m[1];
+        }
+        // buscar código en el nombre si tiene patrón "Cód.: XXX"
+        const cm=name.match(/[Cc][oó][d]\.?\s*:?\s*([A-Z0-9\-_]{2,20})/);
+        if(cm) cod=cm[1];
+        products.push({name,mayo:price,cod:cod||_slugCode(name)});
+      }
+    });
+  }
+
+  return products;
+}
+
+// Generar slug de código a partir del nombre del producto
+function _slugCode(name){
+  return name.toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9]/g,'-')
+    .replace(/-+/g,'-').replace(/^-|-$/g,'')
+    .slice(0,20);
+}
+
+// ─── ONCEPUNTOS: MERGE PRODUCTOS PARSEADOS ────────────────────────────────────
+function _mergeOncePuntosProducts(parsed){
+  const mult=window._opMarginMult||1.30;
+  const maxId=PRODUCTS.reduce((m,p)=>Math.max(m,p.id),0);
+  let nextId=maxId+1;
+  let added=0,updated=0;
+
+  parsed.forEach(({name,mayo,cod})=>{
+    // Buscar por código
+    let existing=cod?PRODUCTS.find(p=>p.cod===cod):null;
+    // Si no, buscar por nombre similar
+    if(!existing){
+      const norm=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+      existing=PRODUCTS.find(p=>{
+        const pn=(p.name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+        return pn===norm||(pn.length>8&&norm.length>8&&pn.startsWith(norm.slice(0,8)));
+      });
+    }
+
+    if(existing){
+      // actualizar precio mayorista y recalcular
+      existing.mayo=mayo;
+      existing.price=Math.round(mayo*mult);
+      existing.old=Math.round(existing.price*1.20);
+      existing.disc=Math.round((1-1/mult)*100)||17;
+      existing.ship=existing.price>=20000?'Envío gratis':'Envío gratis en compras +$20.000';
+      if(cod&&!existing.cod) existing.cod=cod;
+      updated++;
+    } else {
+      // agregar producto nuevo
+      const price=Math.round(mayo*mult);
+      const imgUrl=cod&&!cod.includes(' ')?B+cod+'.jpg':'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg';
+      PRODUCTS.push({
+        id:nextId++,name,img:imgUrl,price,old:Math.round(price*1.20),
+        disc:Math.round((1-1/mult)*100)||17,seller:'Zale',mayo,cod,
+        rating:4.3,reviews:12,cat:'otros',badges:[],
+        ship:price>=20000?'Envío gratis':'Envío gratis en compras +$20.000',
+        stock:'En stock'
+      });
+      added++;
+    }
+  });
+
+  // Guardar en Firebase si está disponible
+  if(window.fbSaveProduct && (added+updated)>0){
+    const toSave=PRODUCTS.filter(p=>p.mayo!==undefined).slice(-Math.min(added+updated,30));
+    toSave.forEach(p=>{
+      window.fbSaveProduct(p).catch(()=>{});
+    });
+  }
+
+  return {added,updated};
+}
+
+// ─── CSV UTILITIES ────────────────────────────────────────────────────────────
+function _csvSlug(name){
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+function _csvParseRow(line,sep){
+  if(!sep) sep=line.includes(';')?';':',';
+  const result=[];
+  let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+      else{inQ=!inQ;}
+    } else if(ch===sep&&!inQ){
+      result.push(cur.trim());cur='';
+    } else {cur+=ch;}
+  }
+  result.push(cur.trim());
+  return result;
+}
+function _csvQ(v,sep){return sep===';'?'"'+String(v).replace(/"/g,'""')+'"':'"'+String(v).replace(/"/g,'""')+'"';}
+function _csvDownload(content,filename){
+  const blob=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+}
+function _csvApplyRows(rows,iNombre,iCat,iPrecio,iBadge,iImg,iDesc,iSku,iBarcode){
+  let updated=0,added=0,skipped=0;
+  for(const cols of rows){
+    const nombre=(cols[iNombre]||'').trim();
+    const precioRaw=(cols[iPrecio]||'').replace(',','.');
+    const precio=parseFloat(precioRaw);
+    if(!nombre||isNaN(precio)||precio<=0){skipped++;continue;}
+    const cat=iCat>=0?(cols[iCat]||'').trim().toLowerCase()||'otros':'otros';
+    let badges=[];
+    if(iBadge>=0){
+      const ts=(cols[iBadge]||'').toLowerCase();
+      if(ts.includes('hot')) badges.push('hot');
+      if(ts.includes('sale')) badges.push('sale');
+      if(ts.includes('new')||ts.includes('nuevo')) badges.push('new');
+    }
+    const imgVal =iImg>=0?(cols[iImg]||'').trim():'';
+    const descVal=iDesc>=0?(cols[iDesc]||'').trim():'';
+    const skuVal =iSku>=0?(cols[iSku]||'').trim():'';
+    const bcVal  =iBarcode>=0?(cols[iBarcode]||'').trim():'';
+    const existing=PRODUCTS.find(p=>p.name.toLowerCase()===nombre.toLowerCase()||
+      (skuVal&&p.sku&&p.sku===skuVal));
+    if(existing){
+      existing.name=nombre;
+      existing.price=Math.round(precio);
+      existing.old=Math.round(precio*1.20);
+      if(iCat>=0&&cat) existing.cat=cat;
+      if(iBadge>=0) existing.badges=badges;
+      if(imgVal) existing.img=imgVal;
+      if(descVal) existing.desc=descVal;
+      if(skuVal) existing.sku=skuVal;
+      if(bcVal) existing.barcode=bcVal;
+      updated++;
+    } else {
+      PRODUCTS.push({
+        id:Date.now()+Math.floor(Math.random()*9999),
+        name:nombre,price:Math.round(precio),old:Math.round(precio*1.20),
+        cat:cat||'otros',
+        img:imgVal||'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg',
+        desc:descVal,sku:skuVal,barcode:bcVal,
+        badges:badges,seller:'Zale',stars:4.5,reviews:10,
+        inst:'3 cuotas sin interés'
+      });
+      added++;
+    }
+  }
+  admInit();
+  if(typeof renderProducts==='function') renderProducts();
+  return {updated,added,skipped};
+}
+function _csvReadAndProcess(input,processFn){
+  const file=input.files[0];
+  if(!file){return;}
+  input.value='';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const text=e.target.result.replace(/^\uFEFF/,'');
+      processFn(text);
+    } catch(err){
+      showToast('⚠️','Error al leer el CSV: '+err.message);
+    }
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+// ─── TIENDA NUBE EXPORT ───────────────────────────────────────────────────────
+function exportTiendaNubeCSV(){
+  const sel=window._admSelectedIds;
+  const source=sel&&sel.size>0 ? PRODUCTS.filter(p=>sel.has(p.id)) : PRODUCTS;
+  if(source.length===0){showToast('⚠️','No hay productos para exportar');return;}
   const headers=[
     'Identificador de URL','Nombre','Categorías','Nombre de propiedad 1','Valor de propiedad 1',
     'Nombre de propiedad 2','Valor de propiedad 2','Nombre de propiedad 3','Valor de propiedad 3',
@@ -3823,127 +4308,164 @@ function exportCSV(){
     'Descripción','Tags','Título para SEO','Descripción para SEO','Marca',
     'Producto Físico','MPN (Número de pieza del fabricante)','Sexo','Rango de edad','Costo'
   ];
-  const rows=PRODUCTS.map(p=>{
-    const slug=p.name.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const rows=source.map(p=>{
     const cost=Math.round(p.price/1.30);
     return [
-      slug, p.name, p.cat,
+      _csvSlug(p.name), p.name, p.cat,
       '','','','','','',
       p.price.toFixed(2),'','','','','',
-      'SI','','','SI',
+      'SI',p.sku||'',p.barcode||'','SI',
       p.price>=20000?'SI':'NO',
-      '','', p.name,'','Zale',
+      p.desc||'', p.badges.join(','), p.name,'','Zale',
       'SI','','','', cost.toFixed(2)
-    ].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';');
+    ].map(v=>_csvQ(v,';')).join(';');
   });
-  const csv=[headers.map(h=>'"'+h+'"').join(';'),...rows].join('\r\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='productos_zale.csv';
-  a.click();
-  showToast('📥','CSV con '+PRODUCTS.length+' productos descargado');
+  const csv=[headers.map(h=>_csvQ(h,';')).join(';'),...rows].join('\r\n');
+  _csvDownload(csv,'productos_zale_tiendanube.csv');
+  showToast('📥','Exportado para Tienda Nube: '+source.length+' producto'+(source.length===1?'':'s'));
 }
 
-function importCSV(input){
-  const file=input.files[0];
-  if(!file){return;}
-  input.value=''; // reset so same file can be re-imported
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const text=e.target.result.replace(/^\uFEFF/,''); // strip BOM
-      const lines=text.split(/\r?\n/).filter(l=>l.trim());
-      if(lines.length<2){showToast('⚠️','El CSV está vacío o no tiene datos');return;}
+// ─── SHOPIFY EXPORT ───────────────────────────────────────────────────────────
+function exportShopifyCSV(){
+  const sel=window._admSelectedIds;
+  const source=sel&&sel.size>0 ? PRODUCTS.filter(p=>sel.has(p.id)) : PRODUCTS;
+  if(source.length===0){showToast('⚠️','No hay productos para exportar');return;}
+  const headers=[
+    'Title','URL handle','Description','Vendor','Product category','Type','Tags',
+    'Published on online store','Status','SKU','Barcode',
+    'Option1 name','Option1 value','Option1 Linked To',
+    'Option2 name','Option2 value','Option2 Linked To',
+    'Option3 name','Option3 value','Option3 Linked To',
+    'Price','Compare-at price','Cost per item','Charge tax','Tax code',
+    'Unit price total measure','Unit price total measure unit',
+    'Unit price base measure','Unit price base measure unit',
+    'Inventory tracker','Inventory quantity','Continue selling when out of stock',
+    'Weight value (grams)','Weight unit for display','Requires shipping',
+    'Fulfillment service','Product image URL','Image position','Image alt text',
+    'Variant image URL','Gift card','SEO title','SEO description',
+    'Color (product.metafields.shopify.color-pattern)',
+    'Google Shopping / Google product category','Google Shopping / Gender',
+    'Google Shopping / Age group','Google Shopping / Manufacturer part number (MPN)',
+    'Google Shopping / Ad group name','Google Shopping / Ads labels',
+    'Google Shopping / Condition','Google Shopping / Custom product',
+    'Google Shopping / Custom label 0','Google Shopping / Custom label 1',
+    'Google Shopping / Custom label 2','Google Shopping / Custom label 3',
+    'Google Shopping / Custom label 4'
+  ];
+  const rows=source.map(p=>{
+    const cost=Math.round(p.price/1.30);
+    return [
+      p.name,                          // Title
+      _csvSlug(p.name),                // URL handle
+      p.desc||'',                      // Description
+      'Zale',                          // Vendor
+      p.cat,                           // Product category
+      p.cat,                           // Type
+      p.badges.join(', '),             // Tags
+      'TRUE',                          // Published
+      'active',                        // Status
+      p.sku||'',                       // SKU
+      p.barcode||'',                   // Barcode
+      'Title','Default Title','',      // Option1
+      '','','',                        // Option2
+      '','','',                        // Option3
+      p.price.toFixed(2),              // Price
+      p.old?p.old.toFixed(2):'',       // Compare-at price
+      cost.toFixed(2),                 // Cost per item
+      'TRUE','',                       // Charge tax, Tax code
+      '','','','',                     // Unit price fields
+      'shopify',                       // Inventory tracker
+      '10',                            // Inventory quantity
+      'deny',                          // Continue selling when out of stock
+      '','g',                          // Weight
+      'TRUE',                          // Requires shipping
+      'manual',                        // Fulfillment service
+      p.img||'',                       // Product image URL
+      '1',                             // Image position
+      p.name,                          // Image alt text
+      '',                              // Variant image URL
+      'FALSE',                         // Gift card
+      p.name,                          // SEO title
+      p.desc||p.name,                  // SEO description
+      '',                              // Color metafield
+      '','','','','','','new','FALSE', // Google Shopping
+      '','','','',''                   // Custom labels
+    ].map(v=>_csvQ(v,',')).join(',');
+  });
+  const csv=[headers.map(h=>_csvQ(h,',')).join(','),...rows].join('\r\n');
+  _csvDownload(csv,'productos_zale_shopify.csv');
+  showToast('📥','Exportado para Shopify: '+source.length+' producto'+(source.length===1?'':'s'));
+}
 
-      // Parse a single CSV row respecting quoted fields (separator ; or ,)
-      function parseRow(line){
-        const sep=line.includes(';')?';':',';
-        const result=[];
-        let cur='',inQ=false;
-        for(let i=0;i<line.length;i++){
-          const ch=line[i];
-          if(ch==='"'){
-            if(inQ&&line[i+1]==='"'){cur+='"';i++;}
-            else{inQ=!inQ;}
-          } else if(ch===sep&&!inQ){
-            result.push(cur.trim());cur='';
-          } else {cur+=ch;}
-        }
-        result.push(cur.trim());
-        return result;
-      }
-
-      const headers=parseRow(lines[0]);
-      function colIdx(candidates){
-        for(let hi=0;hi<headers.length;hi++){
-          for(const c of candidates){
-            if(headers[hi].toLowerCase().includes(c.toLowerCase())) return hi;
-          }
-        }
-        return -1;
-      }
-      const iNombre = colIdx(['nombre','name']);
-      const iCat    = colIdx(['categor']);
-      const iPrecio = colIdx(['precio','price']);
-      const iBadge  = colIdx(['badge','tag']);
-
-      if(iNombre<0||iPrecio<0){
-        showToast('⚠️','CSV inválido: necesita columnas Nombre y Precio');
-        return;
-      }
-
-      let updated=0,added=0,skipped=0;
-      for(let li=1;li<lines.length;li++){
-        if(!lines[li].trim()) continue;
-        const cols=parseRow(lines[li]);
-        const nombre=(cols[iNombre]||'').trim();
-        const precioRaw=(cols[iPrecio]||'').replace(',','.');
-        const precio=parseFloat(precioRaw);
-        if(!nombre||isNaN(precio)||precio<=0){skipped++;continue;}
-        const cat=iCat>=0?(cols[iCat]||'').trim().toLowerCase()||'otros':'otros';
-        let badges=[];
-        if(iBadge>=0){
-          const ts=(cols[iBadge]||'').toLowerCase();
-          if(ts.includes('hot')) badges.push('hot');
-          if(ts.includes('sale')) badges.push('sale');
-          if(ts.includes('new')||ts.includes('nuevo')) badges.push('new');
-        }
-        const existing=PRODUCTS.find(p=>p.name.toLowerCase()===nombre.toLowerCase());
-        if(existing){
-          existing.name=nombre;
-          existing.price=Math.round(precio);
-          existing.old=Math.round(precio*1.20);
-          if(iCat>=0&&cat) existing.cat=cat;
-          if(iBadge>=0) existing.badges=badges;
-          updated++;
-        } else {
-          PRODUCTS.push({
-            id:Date.now()+Math.floor(Math.random()*9999),
-            name:nombre,price:Math.round(precio),old:Math.round(precio*1.20),
-            cat:cat||'otros',
-            img:'https://www.oncepuntos.com.ar/fotos/no_disponible.jpg',
-            badges:badges,seller:'Zale',stars:4.5,reviews:10,
-            inst:'3 cuotas sin interés'
-          });
-          added++;
-        }
-      }
-      admInit();
-      if(typeof renderProducts==='function') renderProducts();
-      const msg=(updated?updated+' actualiz.':'')+
-                (updated&&added?' · ':'')+
-                (added?added+' nuevos':'')+
-                ((updated||added)&&skipped?' · ':'')+
-                (skipped?skipped+' omitidos':'');
-      showToast('✅','Importado: '+msg);
-    } catch(err){
-      showToast('⚠️','Error al leer el CSV: '+err.message);
+// ─── TIENDA NUBE IMPORT ───────────────────────────────────────────────────────
+function importTiendaNubeCSV(input){
+  _csvReadAndProcess(input,function(text){
+    const lines=text.split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length<2){showToast('⚠️','El CSV está vacío o no tiene datos');return;}
+    const headers=_csvParseRow(lines[0],';');
+    function ci(candidates){
+      for(let i=0;i<headers.length;i++)
+        for(const c of candidates)
+          if(headers[i].toLowerCase().includes(c.toLowerCase())) return i;
+      return -1;
     }
-  };
-  reader.readAsText(file,'utf-8');
+    const iNombre  =ci(['nombre','name']);
+    const iCat     =ci(['categor']);
+    const iPrecio  =ci(['precio','price']);
+    const iBadge   =ci(['tag']);
+    const iImg     =ci(['imagen','image url','foto']);
+    const iDesc    =ci(['descripción','descripcion','description']);
+    const iSku     =ci(['sku']);
+    const iBarcode =ci(['código de barras','barcode']);
+    if(iNombre<0||iPrecio<0){
+      showToast('⚠️','CSV inválido: necesita columnas Nombre y Precio');return;
+    }
+    const rows=lines.slice(1).filter(l=>l.trim()).map(l=>_csvParseRow(l,';'));
+    const {updated,added,skipped}=_csvApplyRows(rows,iNombre,iCat,iPrecio,iBadge,iImg,iDesc,iSku,iBarcode);
+    const msg=(updated?updated+' actualiz.':'')+
+              (updated&&added?' · ':'')+
+              (added?added+' nuevos':'')+
+              ((updated||added)&&skipped?' · ':'')+
+              (skipped?skipped+' omitidos':'');
+    showToast('✅','Tienda Nube importado: '+msg);
+  });
+}
+
+// ─── SHOPIFY IMPORT ───────────────────────────────────────────────────────────
+function importShopifyCSV(input){
+  _csvReadAndProcess(input,function(text){
+    const lines=text.split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length<2){showToast('⚠️','El CSV está vacío o no tiene datos');return;}
+    const headers=_csvParseRow(lines[0],',');
+    function ci(candidates){
+      for(let i=0;i<headers.length;i++)
+        for(const c of candidates)
+          if(headers[i].toLowerCase().includes(c.toLowerCase())) return i;
+      return -1;
+    }
+    // Shopify columns (English)
+    const iNombre  =ci(['title']);
+    const iCat     =ci(['product category','type','vendor']);
+    const iPrecio  =ci(['price']);
+    const iBadge   =ci(['tags']);
+    const iImg     =ci(['product image url','image src']);
+    const iDesc    =ci(['description','body']);
+    const iSku     =ci(['sku']);
+    const iBarcode =ci(['barcode']);
+    if(iNombre<0||iPrecio<0){
+      showToast('⚠️','CSV de Shopify inválido: necesita columnas Title y Price');return;
+    }
+    // Skip variant rows (rows where Title is empty — Shopify repeats product per variant)
+    const rows=lines.slice(1).filter(l=>l.trim()).map(l=>_csvParseRow(l,','))
+      .filter(cols=>(cols[iNombre]||'').trim()!=='');
+    const {updated,added,skipped}=_csvApplyRows(rows,iNombre,iCat,iPrecio,iBadge,iImg,iDesc,iSku,iBarcode);
+    const msg=(updated?updated+' actualiz.':'')+
+              (updated&&added?' · ':'')+
+              (added?added+' nuevos':'')+
+              ((updated||added)&&skipped?' · ':'')+
+              (skipped?skipped+' omitidos':'');
+    showToast('✅','Shopify importado: '+msg);
+  });
 }
 
 /* ============================================================
